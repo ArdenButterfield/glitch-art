@@ -1,6 +1,8 @@
-.DS_Store
-*.pyc
-*.pdf
+**/.DS_Store
+**.pyc
+**.pdf
 images/raw/*
 images/glitched/*
 sources
+glitcher/venv
+**/.idea
