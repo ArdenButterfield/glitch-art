@@ -1,16 +1,21 @@
 import numpy as np
 from PIL import Image
 import logging
+from scipy.io import wavfile
 
 logging.basicConfig()
 logging.getLogger().setLevel(logging.INFO)
 
+SAMPLERATE = 44100 # For exporting audio
+
 class Glitcher:
-    def __init__(self, image_file:str, log_file=""):
-        self.input_file = image_file
+    def __init__(self, log_file=""):
         if not log_file:
             self.logging = True
             self.log = ""
+
+    def load_image(self, image_file:str):
+        self.input_file = image_file
         try:
             image = Image.open(image_file)
         except FileNotFoundError:
@@ -20,6 +25,18 @@ class Glitcher:
         image.load()
         self.log += image_file + "\n"
         self.image = np.array(image, dtype="int32")
+
+    def save_wav(self, file_name):
+        """Export as a wav file."""
+        if not file_name.endswith(".wav"):
+            logging.error("To save as a wav, file must end with .wav")
+        r, g, b = [self.image[:, :, channel].flatten() for channel in range(3)]
+        width = len(self.image[0])
+        height = len(self.image)
+        wavfile.write(file_name, SAMPLERATE, )
+        # TODO: figure out a more elegant way to do all of this.
+
+
 
     def invert_colors(self):
         """
@@ -53,7 +70,7 @@ class Glitcher:
         self.log += "vertical_flip"
         self.image = np.flipud(self.image)
 
-    def save_to(self, file_name:str):
+    def save_image(self, file_name:str):
         """
         Save the image to [file_name], and saves the log to [file_name].txt
         """
@@ -71,4 +88,4 @@ class Glitcher:
 a = Glitcher("../images/raw/branches.jpg")
 a.invert_colors()
 a.vertical_flip()
-a.save_to("../images/glitched/test2.png")
+a.save_image("../images/glitched/test2.png")
