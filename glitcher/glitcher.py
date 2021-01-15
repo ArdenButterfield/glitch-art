@@ -1,18 +1,21 @@
-import numpy as np
-from PIL import Image
+import numpy as np # For general processing.
+from PIL import Image # For reading and writing images
 import logging
-from scipy.io import wavfile
+from scipy.io import wavfile # For reading and writing to .wav
 
 logging.basicConfig()
 logging.getLogger().setLevel(logging.INFO)
 
 SAMPLERATE = 44100 # For exporting audio
 
+
 class Glitcher:
     def __init__(self, log_file=""):
         if not log_file:
             self.logging = True
             self.log = ""
+        self.input_file = None
+        self.image = None
 
     def load_image(self, image_file:str):
         self.input_file = image_file
@@ -24,19 +27,56 @@ class Glitcher:
 
         image.load()
         self.log += image_file + "\n"
-        self.image = np.array(image, dtype="int32")
+        self.image = np.array(image)
 
-    def save_wav(self, file_name):
+    def save_wav(self, r_filename, g_filename, b_filename):
         """Export as a wav file."""
-        if not file_name.endswith(".wav"):
-            logging.error("To save as a wav, file must end with .wav")
+        for f in r_filename, g_filename, b_filename:
+            if not f.endswith(".wav"):
+                logging.error("To save as a wav, file must end with .wav")
         r, g, b = [self.image[:, :, channel].flatten() for channel in range(3)]
         width = len(self.image[0])
         height = len(self.image)
-        wavfile.write(file_name, SAMPLERATE, )
+        print(r)
+        wavfile.write(r_filename, SAMPLERATE, r)
+        wavfile.write(g_filename, SAMPLERATE, g)
+        wavfile.write(b_filename, SAMPLERATE, b)
         # TODO: figure out a more elegant way to do all of this.
+        return width, height
 
+    def read_wav(self, r_filename, g_filename, b_filename, dimensions):
+        fs, r_data = wavfile.read(r_filename)
+        fs, g_data = wavfile.read(g_filename)
+        fs, b_data = wavfile.read(b_filename)
 
+        for i in r_data, g_data, b_data:
+            print(i.dtype)
+            if i.dtype == "int16":
+                print("hi")
+                i //= 256
+                i += 128
+                i = i.astype("uint8")
+
+        # b_data = b_data.astype("uint8")
+        print(b_data.dtype)
+        print(r_data, b_data)
+        width, height = dimensions
+        self.image = np.zeros((height, width, 3), dtype="int8")
+        i = 0
+        for row in self.image:
+            for col in row:
+                col[0] = r_data[i]
+                col[1] = g_data[i]
+                col[2] = b_data[i]
+                i += 1
+
+    def copy(self):
+        """Create a copy of a Glitcher object"""
+        copied = Glitcher()
+        copied.image = self.image.copy()
+        copied.log = self.log
+        copied.input_file = self.input_file
+        return copied
 
     def invert_colors(self):
         """
@@ -84,8 +124,7 @@ class Glitcher:
         with open(f"{file_name}.txt", 'w') as log_file:
             log_file.write(self.log)
 
+    def display(self):
+        image = Image.fromarray(np.uint8(self.image))
+        image.show()
 
-a = Glitcher("../images/raw/branches.jpg")
-a.invert_colors()
-a.vertical_flip()
-a.save_image("../images/glitched/test2.png")
