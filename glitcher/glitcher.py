@@ -29,45 +29,40 @@ class Glitcher:
         self.log += image_file + "\n"
         self.image = np.array(image)
 
-    def save_wav(self, r_filename, g_filename, b_filename):
+    def save_wav(self, files):
         """Export as a wav file."""
-        for f in r_filename, g_filename, b_filename:
+        if len(files) != 3:
+            logging.error("There must be 3 wav files")
+        for f in files:
             if not f.endswith(".wav"):
                 logging.error("To save as a wav, file must end with .wav")
-        r, g, b = [self.image[:, :, channel].flatten() for channel in range(3)]
+        channels = [self.image[:, :, channel].flatten() for channel in range(3)]
         width = len(self.image[0])
         height = len(self.image)
-        print(r)
-        wavfile.write(r_filename, SAMPLERATE, r)
-        wavfile.write(g_filename, SAMPLERATE, g)
-        wavfile.write(b_filename, SAMPLERATE, b)
+        for i in range(3):
+            wavfile.write(files[i], SAMPLERATE, channels[i])
         # TODO: figure out a more elegant way to do all of this.
         return width, height
 
-    def read_wav(self, r_filename, g_filename, b_filename, dimensions):
-        fs, r_data = wavfile.read(r_filename)
-        fs, g_data = wavfile.read(g_filename)
-        fs, b_data = wavfile.read(b_filename)
+    def read_wav(self, files, dimensions):
+        if len(files) != 3:
+            logging.error("There must be 3 wav files")
+        data = [wavfile.read(file)[1] for file in files]
+        # [1] since wavfile.read() returns fs, data
 
-        for i in r_data, g_data, b_data:
-            print(i.dtype)
+        for i in data:
             if i.dtype == "int16":
-                print("hi")
                 i //= 256
                 i += 128
                 i = i.astype("uint8")
 
-        # b_data = b_data.astype("uint8")
-        print(b_data.dtype)
-        print(r_data, b_data)
         width, height = dimensions
         self.image = np.zeros((height, width, 3), dtype="int8")
         i = 0
         for row in self.image:
             for col in row:
-                col[0] = r_data[i]
-                col[1] = g_data[i]
-                col[2] = b_data[i]
+                for channel in range(3):
+                    col[channel] = data[channel][i]
                 i += 1
 
     def copy(self):
