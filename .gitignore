@@ -6,3 +6,5 @@ images/glitched/*
 sources
 glitcher/venv
 **/.idea
+glitcher/wb.png
+glitcher/scratch.py

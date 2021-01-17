@@ -2,6 +2,8 @@ import numpy as np # For general processing.
 from PIL import Image # For reading and writing images
 import logging
 from scipy.io import wavfile # For reading and writing to .wav
+import io
+from filetypes import *
 
 logging.basicConfig()
 logging.getLogger().setLevel(logging.INFO)
@@ -18,6 +20,7 @@ class Glitcher:
         self.image = None
 
     def load_image(self, image_file:str):
+        # https://stackoverflow.com/questions/33101935/convert-pil-image-to-byte-array
         self.input_file = image_file
         try:
             image = Image.open(image_file)
@@ -49,7 +52,6 @@ class Glitcher:
             logging.error("There must be 3 wav files")
         data = [wavfile.read(file)[1] for file in files]
         # [1] since wavfile.read() returns fs, data
-
         for i in data:
             if i.dtype == "int16":
                 i //= 256
@@ -122,4 +124,3 @@ class Glitcher:
     def display(self):
         image = Image.fromarray(np.uint8(self.image))
         image.show()
-
