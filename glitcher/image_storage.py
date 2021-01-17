@@ -1,3 +1,15 @@
+"""
+ImageStorage class
+
+This class facilitates conversion between image formats, Python Image Library
+images, and numpy arrays. I will likely implement more image file formats soon,
+and I may implement storing/loading files to wav, though that is a more
+unconventional way to store images, so it may not make sense to handle them in
+this class.
+
+-- Arden Butterfield, 2021
+"""
+
 from filetypes import *
 import numpy as np
 import sys
@@ -57,7 +69,8 @@ class ImageStorage:
             # TODO: figure it out
             pass
         elif self.im_type == JPEG or self.im_type == PNG:
-            self.im_representation = Image.open(io.BytesIO(self.im_representation))
+            self.im_representation = Image.open(
+                io.BytesIO(self.im_representation))
 
         self.im_type = PIL_ARRAY
         return self.im_representation
@@ -81,13 +94,3 @@ class ImageStorage:
 
         self.im_type = JPEG
         return self.im_representation
-
-a = ImageStorage('wb.png')
-for i in range(3):
-    a.as_numpy_array()
-    a.as_png()
-    a.as_pil_array()
-    a.as_jpeg()
-    a.as_png()
-    a.as_numpy_array()
-    a.as_jpeg()
