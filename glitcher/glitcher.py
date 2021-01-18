@@ -4,6 +4,7 @@ import logging
 from scipy.io import wavfile # For reading and writing to .wav
 import io
 from filetypes import *
+from image_storage import ImageStorage
 
 logging.basicConfig()
 logging.getLogger().setLevel(logging.INFO)
@@ -12,25 +13,19 @@ SAMPLERATE = 44100 # For exporting audio
 
 
 class Glitcher:
-    def __init__(self, log_file=""):
+    def __init__(self, log_file="", max_checkpoints=-1):
         if not log_file:
             self.logging = True
             self.log = ""
-        self.input_file = None
-        self.image = None
+        self.image = ImageStorage()
+        self.max_checkpoints = max_checkpoints
+        self.checkpoints = []
+        self.num_checkpoints = 0
 
     def load_image(self, image_file:str):
-        # https://stackoverflow.com/questions/33101935/convert-pil-image-to-byte-array
         self.input_file = image_file
-        try:
-            image = Image.open(image_file)
-        except FileNotFoundError:
-            logging.error(f"Usage: cannot find image {image_file}\n")
-            return
-
-        image.load()
         self.log += image_file + "\n"
-        self.image = np.array(image)
+        self.image.load_file(image_file)
 
     def save_wav(self, files):
         """Export as a wav file."""
@@ -67,6 +62,37 @@ class Glitcher:
                     col[channel] = data[channel][i]
                 i += 1
 
+    def set_checkpoint(self, name=""):
+        if self.num_checkpoints == self.max_checkpoints:
+            self.checkpoints.pop(0)
+            self.num_checkpoints -= 1
+
+        self.checkpoints.append((self.copy(), name))
+        self.num_checkpoints += 1
+
+    def undo(self):
+        self.revert_to_checkpoint()
+
+    def revert_to_checkpoint(self, name=""):
+        if self.num_checkpoints == 0:
+            logging.warning("No checkpoints saved, unable to revert.")
+            return
+
+        if name:
+            index = self._find_checkpoint_index(name)
+            self.checkpoints = self.checkpoints[:index + 1]
+
+        self = self.checkpoints.pop()[0]
+        self.num_checkpoints = len(self.checkpoints) # TODO: make it linear time
+        return
+
+
+    def _find_checkpoint_index(self, name):
+        for i in range(len(self.checkpoints) -1, -1, -1):
+            if self.checkpoints[i][1] == name:
+                return i
+        return -1
+
     def copy(self):
         """Create a copy of a Glitcher object"""
         copied = Glitcher()
@@ -80,7 +106,8 @@ class Glitcher:
         Invert the colors to their opposite.
         """
         logging.info("Inverting colors")
-        self.image = 255 - self.image
+        im = self.image.as_numpy_array()
+        self.image.im_representation = 255 - im
         self.log += "invert_colors\n"
 
     def rotate(self,turns:int):
@@ -89,7 +116,8 @@ class Glitcher:
         """
         logging.info(f"Rotating {turns}")
         self.log += f"rotate,{turns}\n"
-        self.image = np.rot90(self.image, turns, (1,0))
+        im = self.image.as_numpy_array()
+        self.image.im_representation = np.rot90(im, turns, (1,0))
 
     def horizontal_flip(self):
         """
@@ -97,7 +125,8 @@ class Glitcher:
         """
         logging.info(f"Flipping horizontally")
         self.log += "horizontal_flip"
-        self.image = np.fliplr(self.image)
+        im = self.image.as_numpy_array()
+        self.image.im_representation = np.fliplr(im)
 
     def vertical_flip(self):
         """
@@ -105,13 +134,14 @@ class Glitcher:
         """
         logging.info(f"Flipping vertically")
         self.log += "vertical_flip"
-        self.image = np.flipud(self.image)
+        im = self.image.as_numpy_array()
+        self.image.im_representation = np.flipud(im)
 
     def save_image(self, file_name:str):
         """
         Save the image to [file_name], and saves the log to [file_name].txt
         """
-        image = Image.fromarray(np.uint8(self.image))
+        image = self.image.as_pil_array()
         image.show()
         logging.info("Saving image")
         self.log += f"save_to,{file_name}\n"
@@ -122,5 +152,5 @@ class Glitcher:
             log_file.write(self.log)
 
     def display(self):
-        image = Image.fromarray(np.uint8(self.image))
+        image = self.image.as_pil_array()
         image.show()
