@@ -63,6 +63,13 @@ class Glitcher:
                 i += 1
 
     def set_checkpoint(self, name=""):
+        """
+        Set a checkpoint with the current state of the Glitcher object. A name
+        can optionally be provided, which makes it easier to jump back to a
+        specific checkpoint. If the number of checkpoints set reaches the max
+        number of checkpoints, setting another checkpoint will delete the oldest
+        checkpoint.
+        """
         if self.num_checkpoints == self.max_checkpoints:
             self.checkpoints.pop(0)
             self.num_checkpoints -= 1
@@ -71,9 +78,16 @@ class Glitcher:
         self.num_checkpoints += 1
 
     def undo(self):
+        """
+        Undo the glitcher object to the most recent checkpoint.
+        """
         self.revert_to_checkpoint()
 
     def revert_to_checkpoint(self, name=""):
+        """
+        Revert to the most recent checkpoint with name. If name is not provided,
+        or is an empty string, revert to the most recent checkpoint.
+        """
         if self.num_checkpoints == 0:
             logging.warning("No checkpoints saved, unable to revert.")
             return
@@ -81,20 +95,27 @@ class Glitcher:
         if name:
             index = self._find_checkpoint_index(name)
             self.checkpoints = self.checkpoints[:index + 1]
+            self.num_checkpoints = index + 1
 
         self = self.checkpoints.pop()[0]
-        self.num_checkpoints = len(self.checkpoints) # TODO: make it linear time
+        self.num_checkpoints -= 1
         return
 
 
     def _find_checkpoint_index(self, name):
-        for i in range(len(self.checkpoints) -1, -1, -1):
+        """
+        name: checkpoint name to search for.
+        returns the most recent index of that checkpoint name.
+        """
+        for i in range(self.num_checkpoints - 1, -1, -1):
             if self.checkpoints[i][1] == name:
                 return i
         return -1
 
     def copy(self):
-        """Create a copy of a Glitcher object"""
+        """
+        Create a copy of a Glitcher object
+        """
         copied = Glitcher()
         copied.image = self.image.copy()
         copied.log = self.log
@@ -152,5 +173,8 @@ class Glitcher:
             log_file.write(self.log)
 
     def display(self):
+        """
+        Show the image in a window, using the PIL Image.show() method.
+        """
         image = self.image.as_pil_array()
         image.show()
