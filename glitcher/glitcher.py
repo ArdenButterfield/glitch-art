@@ -97,7 +97,13 @@ class Glitcher:
             self.checkpoints = self.checkpoints[:index + 1]
             self.num_checkpoints = index + 1
 
-        self = self.checkpoints.pop()[0]
+        last = self.checkpoints.pop()
+        last_object = last[0]
+        self.input_file = last_object.input_file
+        self.image = last_object.image
+        # TODO: This is kinda clunky,
+        #  and I still need to figure out the logging.
+
         self.num_checkpoints -= 1
         return
 

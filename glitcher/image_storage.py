@@ -29,11 +29,12 @@ class ImageStorage:
         if lower_name.endswith('.png'):
             self.im_type = PNG
             with open(filename, 'rb') as f:
-                self.im_representation = f.read()
+                self.im_representation = io.BytesIO(f.read())
+                print(type(self.im_representation))
         elif lower_name.endswith('.jpg' or '.jpeg'):
             self.im_type = JPEG
             with open(filename, 'rb') as f:
-                self.im_representation = f.read()
+                self.im_representation = io.BytesIO(f.read())
         else:
             sys.exit(f"File {filename} is not an accepted type.")
 
