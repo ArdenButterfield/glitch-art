@@ -5,6 +5,8 @@ from scipy.io import wavfile # For reading and writing to .wav
 import io
 from filetypes import *
 from image_storage import ImageStorage
+import json # For the logging structure
+import copy  # for deepcopy method
 
 logging.basicConfig()
 logging.getLogger().setLevel(logging.INFO)
@@ -16,19 +18,25 @@ class Glitcher:
     def __init__(self, log_file="", max_checkpoints=-1):
         if not log_file:
             self.logging = True
-            self.log = ""
+            self.log = []
         self.image = ImageStorage()
         self.max_checkpoints = max_checkpoints
         self.checkpoints = []
         self.num_checkpoints = 0
 
     def load_image(self, image_file:str):
-        self.input_file = image_file
-        self.log += image_file + "\n"
+
+        if self.logging:
+            self.log.append({"load_image":[image_file]})
+
         self.image.load_file(image_file)
 
     def save_wav(self, files):
         """Export as a wav file."""
+
+        if self.logging:
+            self.log.append({"save_wav":[files]})
+
         if len(files) != 3:
             logging.error("There must be 3 wav files")
         for f in files:
@@ -43,6 +51,10 @@ class Glitcher:
         return width, height
 
     def read_wav(self, files, dimensions):
+
+        if self.logging:
+            self.log.append({'read_wav':[files, dimensions]})
+
         if len(files) != 3:
             logging.error("There must be 3 wav files")
         data = [wavfile.read(file)[1] for file in files]
@@ -70,6 +82,10 @@ class Glitcher:
         number of checkpoints, setting another checkpoint will delete the oldest
         checkpoint.
         """
+
+        if self.logging:
+            self.log.append({"set_checkpoint":[name]})
+
         if self.num_checkpoints == self.max_checkpoints:
             self.checkpoints.pop(0)
             self.num_checkpoints -= 1
@@ -88,6 +104,10 @@ class Glitcher:
         Revert to the most recent checkpoint with name. If name is not provided,
         or is an empty string, revert to the most recent checkpoint.
         """
+
+        if self.logging:
+            self.log.append({"revert_to_checkpoint":[name]})
+
         if self.num_checkpoints == 0:
             logging.warning("No checkpoints saved, unable to revert.")
             return
@@ -99,7 +119,6 @@ class Glitcher:
 
         last = self.checkpoints.pop()
         last_object = last[0]
-        self.input_file = last_object.input_file
         self.image = last_object.image
         # TODO: This is kinda clunky,
         #  and I still need to figure out the logging.
@@ -120,18 +139,21 @@ class Glitcher:
 
     def copy(self):
         """
-        Create a copy of a Glitcher object
+        Create a copy of a Glitcher object.
+        Note that we do not log these copies. TODO: should we?
         """
         copied = Glitcher()
         copied.image = self.image.copy()
-        copied.log = self.log
-        copied.input_file = self.input_file
+        copied.log = copy.deepcopy(self.log)
         return copied
 
     def invert_colors(self):
         """
         Invert the colors to their opposite.
         """
+        if self.logging:
+            self.log.append({"invert_colors":[]})
+
         logging.info("Inverting colors")
         im = self.image.as_numpy_array()
         self.image.im_representation = 255 - im
@@ -141,8 +163,11 @@ class Glitcher:
         """
         Rotate clockwise by the given number of turns.
         """
+
+        if self.logging:
+            self.log.append({"rotate": [turns]})
+
         logging.info(f"Rotating {turns}")
-        self.log += f"rotate,{turns}\n"
         im = self.image.as_numpy_array()
         self.image.im_representation = np.rot90(im, turns, (1,0))
 
@@ -150,8 +175,11 @@ class Glitcher:
         """
         Flip the image horizontally.
         """
+
+        if self.logging:
+            self.log.append({"horizontal_flip": []})
+
         logging.info(f"Flipping horizontally")
-        self.log += "horizontal_flip"
         im = self.image.as_numpy_array()
         self.image.im_representation = np.fliplr(im)
 
@@ -159,8 +187,11 @@ class Glitcher:
         """
         Flip the image vertically.
         """
+
+        if self.logging:
+            self.log.append({"vertical_flip": []})
+
         logging.info(f"Flipping vertically")
-        self.log += "vertical_flip"
         im = self.image.as_numpy_array()
         self.image.im_representation = np.flipud(im)
 
@@ -168,19 +199,24 @@ class Glitcher:
         """
         Save the image to [file_name], and saves the log to [file_name].txt
         """
+
+        if self.logging:
+            self.log.append({"save_image": [file_name]})
+
         image = self.image.as_pil_array()
         image.show()
         logging.info("Saving image")
-        self.log += f"save_to,{file_name}\n"
         image.save(file_name)
 
-        logging.info("Writing log")
-        with open(f"{file_name}.txt", 'w') as log_file:
-            log_file.write(self.log)
+        if self.logging:
+            logging.info("Writing log")
+            with open(f"{file_name}.txt", 'w') as log_file:
+                log_file.write(json.dumps(self.log,indent=4))
 
     def display(self):
         """
         Show the image in a window, using the PIL Image.show() method.
+        Don't log display. TODO: should we?
         """
         image = self.image.as_pil_array()
         image.show()
