@@ -1,4 +1,5 @@
 import numpy as np # For general processing.
+import sys # For exiting with error messages.
 from PIL import Image # For reading and writing images
 import logging
 from scipy.io import wavfile # For reading and writing to .wav
@@ -32,6 +33,7 @@ class Glitcher:
         self.image.load_file(image_file)
 
     def save_wav(self, files):
+        sys.exit("Don't use these methods for now, they're broken") # TODO
         """Export as a wav file."""
 
         if self.logging:
@@ -51,6 +53,7 @@ class Glitcher:
         return width, height
 
     def read_wav(self, files, dimensions):
+        sys.exit("Don't use these methods for now, they're broken") # TODO
 
         if self.logging:
             self.log.append({'read_wav':[files, dimensions]})
