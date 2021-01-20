@@ -8,7 +8,7 @@ from filetypes import *
 from image_storage import ImageStorage
 import json # For the logging structure
 import copy  # for deepcopy method
-from _function_mappings import _function_mappings
+
 
 logging.basicConfig()
 logging.getLogger().setLevel(logging.INFO)
@@ -19,6 +19,20 @@ SAMPLERATE = 44100 # For exporting audio
 class Glitcher:
     def __init__(self, log_file="", max_checkpoints=-1):
 
+        self._function_mappings = {
+
+            'load_image': self.load_image,
+            'save_wav': self.save_wav,
+            'read_wav': self.read_wav,
+            'set_checkpoint': self.set_checkpoint,
+            'revert_to_checkpoint': self.revert_to_checkpoint,
+            'invert_colors': self.invert_colors,
+            'rotate': self.rotate,
+            'horizontal_flip': self.horizontal_flip,
+            'vertical_flip': self.vertical_flip,
+            'save_image': self.save_image
+
+        }
         self.image = ImageStorage()
         self.max_checkpoints = max_checkpoints
         self.checkpoints = []
@@ -39,14 +53,16 @@ class Glitcher:
             # TODO: there should only be one func on the line.
             #  Right? Why do I have it this way?
             for func_name in line:
-                if func_name in _function_mappings and func_name != 'save_image':
-                    # To avoid overwriting or cluttering things, we won't write
-                    # to image files while reconstructing.
-                    func = _function_mappings[func_name]
+                if func_name in self._function_mappings:
+                    func = self._function_mappings[func_name]
                     args = line[func_name]
                     func(*args)
+                elif func_name == 'save_image':
+                    # To avoid overwriting or cluttering things, we won't write
+                    # to image files while reconstructing.
+                    pass
                 else:
-                    logging.warning("Unrecognized function name when reconstructing log:", func_name)
+                    logging.warning("Unrecognized function name when reconstructing log: " + func_name)
                     logging.warning("Skipping it.")
 
         # Now that we are done reconstructing the log, we want to be adding to
@@ -241,7 +257,7 @@ class Glitcher:
 
         if self.logging:
             logging.info("Writing log")
-            with open(f"{file_name}.txt", 'w') as log_file:
+            with open(f"{file_name}.json", 'w') as log_file:
                 log_file.write(json.dumps(self.log,indent=4))
 
     def display(self):

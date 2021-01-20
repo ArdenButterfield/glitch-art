@@ -32,5 +32,17 @@ def test_checkpoints():
     a.revert_to_checkpoint('first')
     a.display()
 
+def test_log_reconstruction():
+    a = Glitcher()
+
+    a.load_image(branches)
+    a.rotate(1)
+    a.invert_colors()
+    a.save_image(dir + 'branches_logtest.png')
+    a.rotate(3)
+    b = Glitcher(log_file=(dir + 'branches_logtest.png.json'))
+    b.display()
+    a.display()
+
 if __name__ == "__main__":
-    test_checkpoints()
+    test_log_reconstruction()

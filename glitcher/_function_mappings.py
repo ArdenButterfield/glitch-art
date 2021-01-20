@@ -1,4 +1,9 @@
+"""
+As we reconstruct the log, we want to
+"""
+
 _function_mappings = {
+
     'load_image'            :   self.load_image,
     'save_wav'              :   self.save_wav,
     'read_wav'              :   self.read_wav,
