@@ -8,6 +8,7 @@ from filetypes import *
 from image_storage import ImageStorage
 import json # For the logging structure
 import copy  # for deepcopy method
+from _function_mappings import _function_mappings
 
 logging.basicConfig()
 logging.getLogger().setLevel(logging.INFO)
@@ -17,13 +18,40 @@ SAMPLERATE = 44100 # For exporting audio
 
 class Glitcher:
     def __init__(self, log_file="", max_checkpoints=-1):
-        if not log_file:
-            self.logging = True
-            self.log = []
+
         self.image = ImageStorage()
         self.max_checkpoints = max_checkpoints
         self.checkpoints = []
         self.num_checkpoints = 0
+
+        if not log_file:
+            # No log file provided, so we are starting from scratch.
+            self.logging = True
+            self.log = []
+        else:
+            self._reconstruct_from_log(log_file)
+
+    def _reconstruct_from_log(self, log_file):
+        self.logging = False
+        with open(log_file) as f:
+            self.log = json.load(f)
+        for line in self.log:
+            # TODO: there should only be one func on the line.
+            #  Right? Why do I have it this way?
+            for func_name in line:
+                if func_name in _function_mappings and func_name != 'save_image':
+                    # To avoid overwriting or cluttering things, we won't write
+                    # to image files while reconstructing.
+                    func = _function_mappings[func_name]
+                    args = line[func_name]
+                    func(*args)
+                else:
+                    logging.warning("Unrecognized function name when reconstructing log:", func_name)
+                    logging.warning("Skipping it.")
+
+        # Now that we are done reconstructing the log, we want to be adding to
+        # it, going forward.
+        self.logging = True
 
     def load_image(self, image_file:str):
 
@@ -160,7 +188,6 @@ class Glitcher:
         logging.info("Inverting colors")
         im = self.image.as_numpy_array()
         self.image.im_representation = 255 - im
-        self.log += "invert_colors\n"
 
     def rotate(self,turns:int):
         """
@@ -201,6 +228,7 @@ class Glitcher:
     def save_image(self, file_name:str):
         """
         Save the image to [file_name], and saves the log to [file_name].txt
+        TODO: should we be logging saving images?
         """
 
         if self.logging:
