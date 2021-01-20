@@ -129,6 +129,55 @@ class Glitcher:
         if logging:
             self.log.append({'jpeg_noise':[quality]})
         self.image.as_jpeg(quality)
+
+    def shuffle(self, mode):
+        """
+        Cuts the bytes like a deck of cards... well sort of.
+        Take a section from somewhere in the middle of the array and put it
+        somewhere else.
+
+        In fancier words: lay the rows of the image end to end as an array of
+        pixels [A,B]. Choose two random points x, y in [A,B]. WLOG, let x <= y.
+        Choose a random point z in [A,x] U [y,B]. Return the concatenation of
+        if z < x, we get [A,z] + [x,y] + [z,x] + [y,B]. If z > x, we get
+        [A,x] + [y,z] + [x,y] + [z,B].
+
+        TODO: But off by one errors?
+
+        MODES:
+        0 -- Numpy array
+        1 -- PNG
+        2 -- JPEG
+        """
+        if mode == 0:
+            im = self.image.as_numpy_array()
+            height = len(im)
+            width = len(im[0])
+            channels = len(im[0][0])
+            im_size = width * height
+            im = np.reshape(im, (im_size, channels))
+            slice_points = np.random.randint(0, im_size, 2)
+            slice_points.sort()
+            cutsize = slice_points[1] - slice_points[0]
+            insert_point = np.random.randint(im_size - cutsize)
+            if insert_point < slice_points[0]:
+                im = np.concatenate((
+                    im[:insert_point],
+                    im[slice_points[0]:slice_points[1]],
+                    im[insert_point:slice_points[0]],
+                    im[slice_points[1]:]
+                ), axis=0)
+            else:
+                insert_point += cutsize
+                im = np.concatenate((
+                    im[:slice_points[0]],
+                    im[slice_points[1]: insert_point],
+                    im[slice_points[0]:slice_points[1]],
+                    im[insert_point:]
+                ), axis = 0)
+            im = np.reshape(im, (height, width, channels))
+            self.image.im_representation = im
+
     def set_checkpoint(self, name=""):
         """
         Set a checkpoint with the current state of the Glitcher object. A name
