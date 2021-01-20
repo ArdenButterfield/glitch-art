@@ -19,7 +19,7 @@ SAMPLERATE = 44100 # For exporting audio
 class Glitcher:
     def __init__(self, log_file="", max_checkpoints=-1):
 
-        self._function_mappings = {
+        self._dispatch = {
 
             'load_image': self.load_image,
             'save_wav': self.save_wav,
@@ -53,8 +53,8 @@ class Glitcher:
             # TODO: there should only be one func on the line.
             #  Right? Why do I have it this way?
             for func_name in line:
-                if func_name in self._function_mappings:
-                    func = self._function_mappings[func_name]
+                if func_name in self._dispatch:
+                    func = self._dispatch[func_name]
                     args = line[func_name]
                     func(*args)
                 elif func_name == 'save_image':
@@ -121,6 +121,14 @@ class Glitcher:
                     col[channel] = data[channel][i]
                 i += 1
 
+    def jpeg_noise(self, quality):
+        """
+        Saves to a jpeg of quality 0 to 100.
+        TODO: Maybe also include subsampling? https://pillow.readthedocs.io/en/stable/handbook/image-file-formats.html#jpeg
+        """
+        if logging:
+            self.log.append({'jpeg_noise':[quality]})
+        self.image.as_jpeg(quality)
     def set_checkpoint(self, name=""):
         """
         Set a checkpoint with the current state of the Glitcher object. A name

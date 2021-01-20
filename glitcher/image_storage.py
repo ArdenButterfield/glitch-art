@@ -30,7 +30,6 @@ class ImageStorage:
             self.im_type = PNG
             with open(filename, 'rb') as f:
                 self.im_representation = io.BytesIO(f.read())
-                print(type(self.im_representation))
         elif lower_name.endswith('.jpg' or '.jpeg'):
             self.im_type = JPEG
             with open(filename, 'rb') as f:
@@ -72,13 +71,22 @@ class ImageStorage:
         self.im_type = PIL_ARRAY
         return self.im_representation
 
-    def as_jpeg(self):
-        if self.im_type in [NP_ARRAY, PNG]:
+    def as_jpeg(self, quality=-1):
+        if type(quality) not in [int, float]:
+            sys.exit("Invalid quality parameter in as_jpg. Must be a number")
+        if quality < 0:
+            if self.im_type in [NP_ARRAY, PNG]:
+                self.as_pil_array()
+                self.im_representation = self._as_bytes(JPEG)
+            elif self.im_type == PIL_ARRAY:
+                self.im_representation = self._as_bytes(JPEG)
+        else:
             self.as_pil_array()
-            self.im_representation = self._as_bytes(JPEG)
-        elif self.im_type == PIL_ARRAY:
-            self.im_representation = self._as_bytes(JPEG)
-
+            byte_array = io.BytesIO()
+            self.im_representation.save(byte_array,
+                                        format='JPEG',
+                                        quality=int(min(quality , 100)))
+            self.im_representation = byte_array
         self.im_type = JPEG
         return self.im_representation
 

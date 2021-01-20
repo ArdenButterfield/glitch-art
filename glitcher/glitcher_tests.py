@@ -44,5 +44,11 @@ def test_log_reconstruction():
     b.display()
     a.display()
 
+def test_noise():
+    a = Glitcher()
+    a.load_image(branches)
+    a.jpeg_noise(2)
+    a.display()
+
 if __name__ == "__main__":
-    test_log_reconstruction()
+    test_noise()
