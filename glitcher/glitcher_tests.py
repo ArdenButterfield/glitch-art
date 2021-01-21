@@ -50,13 +50,22 @@ def test_noise():
     a.jpeg_noise(2)
     a.display()
 
-def test_shuffle():
+def test_numpy_shuffle():
     a = Glitcher()
-    a.load_image(t1_png)
-    for i in range(30):
-        a.rotate(1)
+    a.load_image(branches)
+    for i in range(200):
         a.shuffle(0)
-
+    a.rotate(1)
+    a.shuffle(0)
+    a.shuffle(0)
     a.display()
+
+def test_png_shuffle():
+    a = Glitcher()
+    a.load_image(branches)
+    for i in range(30):
+        a.shuffle(2)
+    a.display()
+
 if __name__ == "__main__":
-    test_shuffle()
+    test_numpy_shuffle()
