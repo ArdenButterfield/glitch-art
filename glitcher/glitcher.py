@@ -148,18 +148,30 @@ class Glitcher:
             channels = len(im[0][0])
             im_size = width * height
             im = np.reshape(im, (im_size, channels))
-            im = self._shuffle(im, im_size)
+            im = self._shuffle(im, 0, im_size)
             im = np.reshape(im, (height, width, channels))
             self.image.im_representation = im
         elif mode == 2:
             im = self.image.as_jpeg()
             im_array = np.array(list(im.getvalue()))
             im_size = len(im_array)
-            im_array = self._shuffle(im_array, im_size)
+
+            # Based on https://docs.fileformat.com/image/jpeg/ and
+            # https://en.wikipedia.org/wiki/JPEG_File_Interchange_Format#File_format_structure
+            for i in range(im_size - 1):
+                if im_array[i] == 0xFF and im_array[i + 1] == 0xDA:
+                    start_of_image = i + 2
+                    break
+            for i in range(im_size - 1, start_of_image, -1):
+                if im_array[i] == 0xFF and im_array[i + 1] == 0xD9:
+                    end_of_image = i - 1
+                    break
+
+            im_array = self._shuffle(im_array, start_of_image, end_of_image)
             self.image.im_representation.write(bytes(list(im_array)))
 
 
-    def _shuffle(self, im, im_size):
+    def _shuffle(self, im, start, end):
         """
         Helper function for self.shuffle()
 
@@ -169,7 +181,7 @@ class Glitcher:
         In fancier words: Choose random x <= y <= z in [A, B].
         Returns [A, x] + [y, z] + [x, y] + [z, B]
         """
-        slice_points = np.random.randint(0, im_size, 3)
+        slice_points = np.random.randint(start, end, 3)
         slice_points.sort()
         im = np.concatenate((
             im[:slice_points[0]],

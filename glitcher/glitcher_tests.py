@@ -60,12 +60,16 @@ def test_numpy_shuffle():
     a.shuffle(0)
     a.display()
 
-def test_png_shuffle():
+def test_jpeg_shuffle():
     a = Glitcher()
     a.load_image(branches)
-    for i in range(30):
+
+    # TODO: WHY doesn't jpeg shuffling it more do anything??
+    for i in range(2):
         a.shuffle(2)
-    a.display()
+        a.display()
+        a.shuffle(0) # To see if turning it into a numpy array and back helps?
+        a.display()
 
 if __name__ == "__main__":
-    test_numpy_shuffle()
+    test_jpeg_shuffle()
