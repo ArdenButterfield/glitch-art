@@ -76,7 +76,17 @@ class Glitcher:
 
         self.image.load_file(image_file)
 
-    def save_wav(self, files):
+    def save_wav(self, file, mode):
+        """
+        Save the image to a wav file, or list of wav files. There are three
+        modes:
+        0: all channels on one file, one after another. [RR...RRGG...GGBB...BB]
+        1: all channels on one file, interlaced. [RGBRGB...RGBRGB]
+        2: each channel to its own file. [RR...RR], [GG...GG], [BB...BB]
+
+        If mode=2, file should be a list of three filename strings, otherwise it
+        should be a single string.
+        """
         sys.exit("Don't use these methods for now, they're broken") # TODO
         """Export as a wav file."""
 
@@ -141,6 +151,8 @@ class Glitcher:
         1 -- PNG
         2 -- JPEG
         """
+        if logging:
+            self.log.append({'shuffle':[mode]})
         if mode == 0:
             im = self.image.as_numpy_array()
             height = len(im)
