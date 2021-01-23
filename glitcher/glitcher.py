@@ -140,20 +140,40 @@ class Glitcher:
             self.log.append({'jpeg_noise':[quality]})
         self.image.as_jpeg(quality)
 
-    def shuffle(self, mode):
+    def shuffle(self, format=0, random_order=True, even_slices=False, slices=3,
+                entire_image=True):
         """
         Cuts the bytes like a deck of cards... well sort of.
         Take a section from somewhere in the middle of the array and put it
         somewhere else.
 
-        MODES:
+        format:
         0 -- Numpy array
         1 -- PNG
         2 -- JPEG
+
+        random_order:
+        If random_order is true, the ordering of the sliced components will be
+        random. Otherwise, they will be put back in the reverse order to how
+        they started out.
+
+        even_slices:
+        If even_slices is false, the slices will be placed randomly within the
+        image. Otherwise, they will be evenly spaced.
+
+        slices:
+        This is the number of slices in the shuffle.
+
+        entire_image:
+        If true, the entire image will be shuffled. Otherwise, just a randomly
+        chosen segment from the middle of the image will be.
+
+        TODO: look at all these stipulations. Are you actually going to implement
+        them all?
         """
         if logging:
-            self.log.append({'shuffle':[mode]})
-        if mode == 0:
+            self.log.append({'shuffle':[format]})
+        if format == 0:
             im = self.image.as_numpy_array()
             height = len(im)
             width = len(im[0])
@@ -163,7 +183,7 @@ class Glitcher:
             im = self._shuffle(im, 0, im_size)
             im = np.reshape(im, (height, width, channels))
             self.image.im_representation = im
-        elif mode == 2:
+        elif format == 2:
             im = self.image.as_jpeg()
             im_array = np.array(list(im.getvalue()))
             im_size = len(im_array)
