@@ -140,7 +140,7 @@ class Glitcher:
             self.log.append({'jpeg_noise':[quality]})
         self.image.as_jpeg(quality)
 
-    def shuffle(self, format=0, random_order=True, even_slices=False, slices=3,
+    def shuffle(self, format=0, random_order=True, even_slices=False, chunks=2,
                 entire_image=True):
         """
         Cuts the bytes like a deck of cards... well sort of.
@@ -168,21 +168,23 @@ class Glitcher:
         If true, the entire image will be shuffled. Otherwise, just a randomly
         chosen segment from the middle of the image will be.
 
-        TODO: look at all these stipulations. Are you actually going to implement
-        them all?
+        TODO: well the numpy array (the boring one) works like a charm... but
+        the jpeg file is getting corrupted and angry. !?
         """
         if logging:
-            self.log.append({'shuffle':[format]})
+            self.log.append({'shuffle':[format, random_order, even_slices,
+                                        chunks, entire_image]})
         if format == 0:
             im = self.image.as_numpy_array()
             height = len(im)
             width = len(im[0])
             channels = len(im[0][0])
             im_size = width * height
-            im = np.reshape(im, (im_size, channels))
-            im = self._shuffle(im, 0, im_size)
-            im = np.reshape(im, (height, width, channels))
-            self.image.im_representation = im
+            im_array = np.reshape(im, (im_size, channels))
+            print("im array length", len(im_array))
+            start_of_image = 0
+            end_of_image = im_size
+
         elif format == 2:
             im = self.image.as_jpeg()
             im_array = np.array(list(im.getvalue()))
@@ -199,29 +201,42 @@ class Glitcher:
                     end_of_image = i - 1
                     break
 
-            im_array = self._shuffle(im_array, start_of_image, end_of_image)
+        if not entire_image:
+            points = np.random.randint(start_of_image, end_of_image, 2)
+            points.sort()
+            start_of_image = points[0]
+            end_of_image = points[1]
+
+        if even_slices:
+            slice_points = self._get_even_slices(
+                start_of_image, end_of_image, chunks)
+        else:
+            slice_points = np.random.randint(
+                start_of_image, end_of_image, chunks - 1)
+            slice_points.sort()
+            slice_points = np.concatenate([
+                [start_of_image], slice_points, [end_of_image]])
+
+        chunk_list = [im_array[slice_points[i]:slice_points[i+1]] for
+                      i in range(chunks)]
+        print("length of c list", sum([len(i) for i in chunk_list]))
+        if random_order:
+            np.random.shuffle(chunk_list)
+        else:
+            chunk_list = np.flip(chunk_list)
+        slice_points.sort()
+        im_array = np.concatenate(chunk_list, axis=0)
+
+        if format == 0:
+            print("im array length", len(im_array))
+            im = np.reshape(im_array, (height, width, channels))
+            self.image.im_representation = im
+        elif format == 2:
             self.image.im_representation.write(bytes(list(im_array)))
 
-
-    def _shuffle(self, im, start, end):
-        """
-        Helper function for self.shuffle()
-
-        Take a chunk from the middle of the deck, stick it back in the middle of
-        the deck.
-
-        In fancier words: Choose random x <= y <= z in [A, B].
-        Returns [A, x] + [y, z] + [x, y] + [z, B]
-        """
-        slice_points = np.random.randint(start, end, 3)
-        slice_points.sort()
-        im = np.concatenate((
-            im[:slice_points[0]],
-            im[slice_points[1]:slice_points[2]],
-            im[slice_points[0]:slice_points[1]],
-            im[slice_points[2]:]
-        ), axis=0)
-        return im
+    def _get_even_slices(self, start, end, chunks):
+        chunk_size = (end - start) // (chunks)
+        return np.array([start + i * chunk_size for i in range(chunks + 1)])
 
     def set_checkpoint(self, name=""):
         """

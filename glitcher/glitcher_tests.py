@@ -53,18 +53,13 @@ def test_noise():
 def test_numpy_shuffle():
     a = Glitcher()
     a.load_image(branches)
-    for i in range(200):
-        a.shuffle(0)
-    a.rotate(1)
-    a.shuffle(0)
-    a.shuffle(0)
+    a.shuffle(2, chunks=2, entire_image=False)
     a.display()
 
 def test_jpeg_shuffle():
     a = Glitcher()
     a.load_image(branches)
 
-    # TODO: WHY doesn't jpeg shuffling it more do anything??
     for i in range(2):
         a.shuffle(2)
         a.display()
@@ -72,4 +67,4 @@ def test_jpeg_shuffle():
         a.display()
 
 if __name__ == "__main__":
-    test_jpeg_shuffle()
+    test_numpy_shuffle()
