@@ -7,9 +7,6 @@ and I may implement storing/loading files to wav, though that is a more
 unconventional way to store images, so it may not make sense to handle them in
 this class.
 
-TODO: figure out a better way of handling the the image bytes. Maybe leave them in the io wrapper?
-https://stackoverflow.com/questions/8237122/python-3-non-copying-stream-interface-to-bytearray
-
 -- Arden Butterfield, 2021
 """
 
