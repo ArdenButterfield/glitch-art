@@ -94,21 +94,21 @@ class Glitcher:
         """
         if self.logging:
             self.log.append({"save_wav":[file, mode]})
-
-        width = len(self.image[0])
-        height = len(self.image)
+        im = self.image.as_numpy_array()
+        width = len(im[0])
+        height = len(im)
 
         if mode == 0:
             if type(file) != str:
                 assert TypeError("Filename must be a string for mode 0")
-            channels = np.concatenate([self.image[:, :, channel].flatten()
+            channels = np.concatenate([im[:, :, channel].flatten()
                                        for channel in range(3)])
             wavfile.write(file, SAMPLERATE, channels)
 
         elif mode == 1:
             if type(file) != str:
                 assert TypeError("Filename must be a string for mode 1")
-            channels = self.image.flatten()
+            channels = im.flatten()
             wavfile.write(file,SAMPLERATE, channels)
 
         elif mode == 2:
@@ -118,7 +118,7 @@ class Glitcher:
                 assert TypeError(
                     "For mode 2, file must be a list of three strings")
             for i in range(3):
-                data = self.image[:, :, i].flatten()
+                data = im[:, :, i].flatten()
                 wavfile.write(file[i], SAMPLERATE, data)
         else:
             assert ValueError("Unrecongnized mode")
@@ -141,9 +141,9 @@ class Glitcher:
 
         if self.logging:
             self.log.append({'read_wav':[file, mode, dimensions]})
-
+        self.image.as_numpy_array()
         width, height = dimensions
-        self.image = np.zeros((height, width, 3), dtype="int8")
+        im = np.zeros((height, width, 3), dtype="int8")
 
         if mode == 0:
             if type(file) != str:
@@ -157,7 +157,7 @@ class Glitcher:
             # TODO: this is very baaaad. You should use a numpy meeeethod...
             i = 0
             for channel in range(3):
-                for row in self.image:
+                for row in im:
                     for col in row:
                         col[channel] = data[i]
                         i += 1
@@ -172,7 +172,7 @@ class Glitcher:
                 data = data.astype("uint8")
 
             i = 0
-            for row in self.image:
+            for row in im:
                 for col in row:
                     for channel in col:
                         channel = data[i]
@@ -193,11 +193,12 @@ class Glitcher:
                     i += 128
                     i = i.astype("uint8")
             i = 0
-            for row in self.image:
+            for row in im:
                 for col in row:
                     for channel in range(3):
                         col[channel] = data[channel][i]
                     i += 1
+        self.image.im_representation = im
 
     def jpeg_noise(self, quality):
         """
