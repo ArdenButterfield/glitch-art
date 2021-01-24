@@ -13,8 +13,11 @@ this class.
 from filetypes import *
 import numpy as np
 import sys
-from PIL import Image
+from PIL import Image, ImageFile
 import io
+
+ImageFile.LOAD_TRUNCATED_IMAGES = True  # otherwise we get more errors when
+                                        # messing up jpeg images.
 
 class ImageStorage:
     def __init__(self, im_type=None, im_rep=None):

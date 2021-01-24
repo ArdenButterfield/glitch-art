@@ -62,7 +62,9 @@ class Glitcher:
                     # to image files while reconstructing.
                     pass
                 else:
-                    logging.warning("Unrecognized function name when reconstructing log: " + func_name)
+                    logging.warning(
+                        "Unrecognized function name when reconstructing log: "
+                        + func_name)
                     logging.warning("Skipping it.")
 
         # Now that we are done reconstructing the log, we want to be adding to
@@ -86,50 +88,116 @@ class Glitcher:
 
         If mode=2, file should be a list of three filename strings, otherwise it
         should be a single string.
+
+        returns the dimensions of the image, which are needed for reading a wav
+        file.
         """
-        sys.exit("Don't use these methods for now, they're broken") # TODO
-        """Export as a wav file."""
-
         if self.logging:
-            self.log.append({"save_wav":[files]})
+            self.log.append({"save_wav":[file, mode]})
 
-        if len(files) != 3:
-            logging.error("There must be 3 wav files")
-        for f in files:
-            if not f.endswith(".wav"):
-                logging.error("To save as a wav, file must end with .wav")
-        channels = [self.image[:, :, channel].flatten() for channel in range(3)]
         width = len(self.image[0])
         height = len(self.image)
-        for i in range(3):
-            wavfile.write(files[i], SAMPLERATE, channels[i])
-        # TODO: figure out a more elegant way to do all of this.
+
+        if mode == 0:
+            if type(file) != str:
+                assert TypeError("Filename must be a string for mode 0")
+            channels = np.concatenate([self.image[:, :, channel].flatten()
+                                       for channel in range(3)])
+            wavfile.write(file, SAMPLERATE, channels)
+
+        elif mode == 1:
+            if type(file) != str:
+                assert TypeError("Filename must be a string for mode 1")
+            channels = self.image.flatten()
+            wavfile.write(file,SAMPLERATE, channels)
+
+        elif mode == 2:
+            if type(file) != list or \
+                    len(file) != 3 or \
+                    not max([type(file[i]) is str for i in range(3)]):
+                assert TypeError(
+                    "For mode 2, file must be a list of three strings")
+            for i in range(3):
+                data = self.image[:, :, i].flatten()
+                wavfile.write(file[i], SAMPLERATE, data)
+        else:
+            assert ValueError("Unrecongnized mode")
         return width, height
 
-    def read_wav(self, files, dimensions):
-        sys.exit("Don't use these methods for now, they're broken") # TODO
+    def read_wav(self, file, mode, dimensions):
+        """
+        Read the image from a wav file, or list of wav files. There are three
+        modes:
+        0: all channels on one file, one after another. [RR...RRGG...GGBB...BB]
+        1: all channels on one file, interlaced. [RGBRGB...RGBRGB]
+        2: each channel to its own file. [RR...RR], [GG...GG], [BB...BB]
+
+        If mode=2, file should be a list of three filename strings, otherwise it
+        should be a single string.
+
+        dimensions are the dimensions of the image, which are returned by
+        the save_wav method.
+        """
 
         if self.logging:
-            self.log.append({'read_wav':[files, dimensions]})
-
-        if len(files) != 3:
-            logging.error("There must be 3 wav files")
-        data = [wavfile.read(file)[1] for file in files]
-        # [1] since wavfile.read() returns fs, data
-        for i in data:
-            if i.dtype == "int16":
-                i //= 256
-                i += 128
-                i = i.astype("uint8")
+            self.log.append({'read_wav':[file, mode, dimensions]})
 
         width, height = dimensions
         self.image = np.zeros((height, width, 3), dtype="int8")
-        i = 0
-        for row in self.image:
-            for col in row:
-                for channel in range(3):
-                    col[channel] = data[channel][i]
-                i += 1
+
+        if mode == 0:
+            if type(file) != str:
+                assert TypeError("Filename must be a string for mode 0")
+            data = wavfile.read(file)[1]
+            if data.dtype == "int16":
+                data //= 256
+                data += 128
+                data = data.astype("uint8")
+
+            # TODO: this is very baaaad. You should use a numpy meeeethod...
+            i = 0
+            for channel in range(3):
+                for row in self.image:
+                    for col in row:
+                        col[channel] = data[i]
+                        i += 1
+
+        elif mode == 1:
+            if type(file) != str:
+                assert TypeError("Filename must be a string for mode 1")
+            data = wavfile.read(file)[1]
+            if data.dtype == "int16":
+                data //= 256
+                data += 128
+                data = data.astype("uint8")
+
+            i = 0
+            for row in self.image:
+                for col in row:
+                    for channel in col:
+                        channel = data[i]
+                        i += 1
+
+        elif mode == 2:
+            if type(file) != list or \
+                    len(file) != 3 or \
+                    not max([type(file[i]) is str for i in range(3)]):
+                assert TypeError(
+                    "For mode 2, file must be a list of three strings")
+
+            data = [wavfile.read(f)[1] for f in file]
+            # [1] since wavfile.read() returns fs, data
+            for i in data:
+                if i.dtype == "int16":
+                    i //= 256
+                    i += 128
+                    i = i.astype("uint8")
+            i = 0
+            for row in self.image:
+                for col in row:
+                    for channel in range(3):
+                        col[channel] = data[channel][i]
+                    i += 1
 
     def jpeg_noise(self, quality):
         """
@@ -140,16 +208,31 @@ class Glitcher:
             self.log.append({'jpeg_noise':[quality]})
         self.image.as_jpeg(quality)
 
-    def jpeg_bit_flip(self):
+    def jpeg_bit_flip(self, num_bits, change_bytes=False):
         """
-        Okay, we're actually going to change bytes. but who cares.
-        TODO: aren't we?
+        Let's flip some bits in our pretty little jpeg!
+        num_bits: number of bits we will flip.
+        change_bytes: if True, we select a byte, rather than a bit,
+        and randomize its values. From a visual standpoint, changing this
+        doesn't really do much.
+
         """
         im = self.image.as_jpeg()
         im_array = list(im.getvalue())
         im_size = len(im_array)
         start, end = self._find_start_and_end(im_array, im_size)
-        # TODO: finish this function... woo-hoo!
+        bytes_to_flip = np.random.randint(start, end, num_bits)
+        for i in bytes_to_flip:
+            if change_bytes:
+                im_array[i] = np.random.randint(0, 254)
+            else:
+                im_array[i] = self._flip_bit_of_byte(im_array[i],
+                                                     np.random.randint(0,8))
+        self.image.im_representation.write(bytes(list(im_array)))
+
+    def _flip_bit_of_byte(self, byte, bit):
+        mask = 1 << bit
+        return byte ^ mask
 
 
     def _find_start_and_end(self, jpeg_image, im_size):
@@ -167,7 +250,7 @@ class Glitcher:
         if not found:
             raise ValueError('Image is not formatted as a correct jpeg.')
         found = False
-        for i in range(jpeg_image - 1, start_of_image, -1):
+        for i in range(im_size - 1, start_of_image, -1):
             if jpeg_image[i] == 0xFF and jpeg_image[i + 1] == 0xD9:
                 end_of_image = i - 1
                 found = True

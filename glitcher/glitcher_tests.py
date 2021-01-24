@@ -66,5 +66,18 @@ def test_jpeg_shuffle():
         a.shuffle(0) # To see if turning it into a numpy array and back helps?
         a.display()
 
+def test_bitflip():
+    a = Glitcher()
+    a.load_image(branches)
+    a.jpeg_bit_flip(20, True)
+    # a.jpeg_noise(100)
+    a.display()
+
+def test_flip_all_bits():
+    a = Glitcher()
+    a.load_image(branches)
+    a.flip_all_the_bits()
+    a.display()
+
 if __name__ == "__main__":
-    test_numpy_shuffle()
+    test_flip_all_bits()
