@@ -53,7 +53,7 @@ def test_noise():
 def test_numpy_shuffle():
     a = Glitcher()
     a.load_image(branches)
-    a.shuffle(2, chunks=2, entire_image=False)
+    a.shuffle(0, chunks=10, random_order=False, even_slices=True)
     a.display()
 
 def test_jpeg_shuffle():

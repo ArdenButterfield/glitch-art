@@ -140,6 +140,42 @@ class Glitcher:
             self.log.append({'jpeg_noise':[quality]})
         self.image.as_jpeg(quality)
 
+    def jpeg_bit_flip(self):
+        """
+        Okay, we're actually going to change bytes. but who cares.
+        TODO: aren't we?
+        """
+        im = self.image.as_jpeg()
+        im_array = list(im.getvalue())
+        im_size = len(im_array)
+        start, end = self._find_start_and_end(im_array, im_size)
+        # TODO: finish this function... woo-hoo!
+
+
+    def _find_start_and_end(self, jpeg_image, im_size):
+        """
+        jpeg image is a list or numpy array of the bytes of the jpeg image.
+        We use FFDA as the start code and FFD9 as the end code, and we return
+        the first byte after FFDA, and the first byte of FFD9
+        """
+        found = False
+        for i in range(im_size - 1):
+            if jpeg_image[i] == 0xFF and jpeg_image[i + 1] == 0xDA:
+                start_of_image = i + 2
+                found = True
+                break
+        if not found:
+            raise ValueError('Image is not formatted as a correct jpeg.')
+        found = False
+        for i in range(jpeg_image - 1, start_of_image, -1):
+            if jpeg_image[i] == 0xFF and jpeg_image[i + 1] == 0xD9:
+                end_of_image = i - 1
+                found = True
+                break
+        if not found:
+            raise ValueError('Image is not formatted as a correct jpeg.')
+        return start_of_image, end_of_image
+
     def shuffle(self, format=0, random_order=True, even_slices=False, chunks=2,
                 entire_image=True):
         """
@@ -192,14 +228,7 @@ class Glitcher:
 
             # Based on https://docs.fileformat.com/image/jpeg/ and
             # https://en.wikipedia.org/wiki/JPEG_File_Interchange_Format#File_format_structure
-            for i in range(im_size - 1):
-                if im_array[i] == 0xFF and im_array[i + 1] == 0xDA:
-                    start_of_image = i + 2
-                    break
-            for i in range(im_size - 1, start_of_image, -1):
-                if im_array[i] == 0xFF and im_array[i + 1] == 0xD9:
-                    end_of_image = i - 1
-                    break
+            start_of_image, end_of_image = self._find_start_and_end(im_array, im_size)
 
         if not entire_image:
             points = np.random.randint(start_of_image, end_of_image, 2)
@@ -217,14 +246,17 @@ class Glitcher:
             slice_points = np.concatenate([
                 [start_of_image], slice_points, [end_of_image]])
 
-        chunk_list = [im_array[slice_points[i]:slice_points[i+1]] for
+        chunk_list =  [im_array[slice_points[i]:slice_points[i+1]] for
                       i in range(chunks)]
+
         print("length of c list", sum([len(i) for i in chunk_list]))
         if random_order:
             np.random.shuffle(chunk_list)
         else:
             chunk_list = np.flip(chunk_list)
-        slice_points.sort()
+        chunk_list = [i for i in chunk_list] # TODO: booo... janky alert... and doesn't even work!!
+        chunk_list.insert(0, im_array[:slice_points[0]])
+        chunk_list.append(im_array[slice_points[-1]:])
         im_array = np.concatenate(chunk_list, axis=0)
 
         if format == 0:
