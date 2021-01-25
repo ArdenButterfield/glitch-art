@@ -9,13 +9,12 @@ from image_storage import ImageStorage
 import random # for shuffle
 import json # For the logging structure
 import copy  # for deepcopy method
-
+from _glitch_util import *
 
 logging.basicConfig()
 logging.getLogger().setLevel(logging.INFO)
 
 SAMPLERATE = 44100 # For exporting audio
-
 
 class Glitcher:
     def __init__(self, log_file="", max_checkpoints=-1):
@@ -211,44 +210,19 @@ class Glitcher:
         im = self.image.as_jpeg()
         im_array = list(im.getvalue())
         im_size = len(im_array)
-        start, end = self._find_start_and_end(im_array, im_size)
+        start, end = _find_start_and_end(im_array, im_size)
         bytes_to_flip = np.random.randint(start, end, num_bits)
         for i in bytes_to_flip:
             if change_bytes:
                 im_array[i] = np.random.randint(0, 254)
             else:
-                im_array[i] = self._flip_bit_of_byte(im_array[i],
+                im_array[i] = _flip_bit_of_byte(im_array[i],
                                                      np.random.randint(0,8))
         self.image.im_representation.write(bytes(list(im_array)))
 
-    def _flip_bit_of_byte(self, byte, bit):
-        mask = 1 << bit
-        return byte ^ mask
 
 
-    def _find_start_and_end(self, jpeg_image, im_size):
-        """
-        jpeg image is a list or numpy array of the bytes of the jpeg image.
-        We use FFDA as the start code and FFD9 as the end code, and we return
-        the first byte after FFDA, and the first byte of FFD9
-        """
-        found = False
-        for i in range(im_size - 1):
-            if jpeg_image[i] == 0xFF and jpeg_image[i + 1] == 0xDA:
-                start_of_image = i + 2
-                found = True
-                break
-        if not found:
-            raise ValueError('Image is not formatted as a correct jpeg.')
-        found = False
-        for i in range(im_size - 1, start_of_image, -1):
-            if jpeg_image[i] == 0xFF and jpeg_image[i + 1] == 0xD9:
-                end_of_image = i - 1
-                found = True
-                break
-        if not found:
-            raise ValueError('Image is not formatted as a correct jpeg.')
-        return start_of_image, end_of_image
+
 
     def shuffle(self, format=0, random_order=True, even_slices=False, chunks=2,
                 entire_image=True):
@@ -299,7 +273,7 @@ class Glitcher:
 
             # Based on https://docs.fileformat.com/image/jpeg/ and
             # https://en.wikipedia.org/wiki/JPEG_File_Interchange_Format#File_format_structure
-            start_of_image, end_of_image = self._find_start_and_end(im_array, im_size)
+            start_of_image, end_of_image = _find_start_and_end(im_array, im_size)
         else:
             raise ValueError("Incorrect mode. Only 0 and 2 are implemented.")
 
