@@ -92,6 +92,7 @@ class Glitcher:
         returns the dimensions of the image, which are needed for reading a wav
         file.
         """
+        logging.info("Saving to wav file")
         if self.logging:
             self.log.append({"save_wav":[file, mode]})
         im = self.image.as_numpy_array()
@@ -117,6 +118,7 @@ class Glitcher:
                     not max([type(file[i]) is str for i in range(3)]):
                 assert TypeError(
                     "For mode 2, file must be a list of three strings")
+
             for i in range(3):
                 data = im[:, :, i].flatten()
                 wavfile.write(file[i], SAMPLERATE, data)
@@ -138,7 +140,7 @@ class Glitcher:
         dimensions are the dimensions of the image, which are returned by
         the save_wav method.
         """
-
+        logging.info("Reading wav file")
         if self.logging:
             self.log.append({'read_wav':[file, mode, dimensions]})
         self.image.as_numpy_array()
@@ -152,7 +154,7 @@ class Glitcher:
             if data.dtype == "int16":
                 data //= 256
                 data += 128
-                data = data.astype("uint8")
+            data = data.astype("uint8")
 
             # TODO: this is very baaaad. You should use a numpy meeeethod...
             i = 0
@@ -169,13 +171,13 @@ class Glitcher:
             if data.dtype == "int16":
                 data //= 256
                 data += 128
-                data = data.astype("uint8")
+            data = data.astype("uint8")
 
             i = 0
             for row in im:
                 for col in row:
-                    for channel in col:
-                        channel = data[i]
+                    for channel in range(3):
+                        col[channel] = data[i]
                         i += 1
 
         elif mode == 2:
@@ -191,7 +193,7 @@ class Glitcher:
                 if i.dtype == "int16":
                     i //= 256
                     i += 128
-                    i = i.astype("uint8")
+                i = i.astype("uint8")
             i = 0
             for row in im:
                 for col in row:
@@ -301,7 +303,6 @@ class Glitcher:
             channels = len(im[0][0])
             im_size = width * height
             im_array = np.reshape(im, (im_size, channels))
-            print("im array length", len(im_array))
             start_of_image = 0
             end_of_image = im_size
 
@@ -333,7 +334,6 @@ class Glitcher:
         chunk_list =  [im_array[slice_points[i]:slice_points[i+1]] for
                       i in range(chunks)]
 
-        print("length of c list", sum([len(i) for i in chunk_list]))
         if random_order:
             np.random.shuffle(chunk_list)
         else:
@@ -344,7 +344,6 @@ class Glitcher:
         im_array = np.concatenate(chunk_list, axis=0)
 
         if format == 0:
-            print("im array length", len(im_array))
             im = np.reshape(im_array, (height, width, channels))
             self.image.im_representation = im
         elif format == 2:

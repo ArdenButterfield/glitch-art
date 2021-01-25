@@ -79,5 +79,25 @@ def test_flip_all_bits():
     a.flip_all_the_bits()
     a.display()
 
+def test_waves():
+    a = Glitcher()
+    a.load_image(branches)
+    dims = a.save_wav('test.wav', 0)
+    a.read_wav('test.wav', 0, dims)
+    a.display()
+    dims = a.save_wav('test.wav', 1)
+    a.read_wav('test.wav', 1, dims)
+    a.display()
+    dims = a.save_wav(['t0.wav', 't1.wav', 't2.wav'], 2)
+    a.read_wav(['t0.wav', 't1.wav', 't2.wav'], 2, dims)
+    a.display()
+
+def test_waves_fun():
+    a = Glitcher()
+    a.load_image(branches)
+    for i in range(4):
+        dims = a.save_wav('test.wav', 1)
+        a.read_wav('test.wav', 0, dims)
+    a.display()
 if __name__ == "__main__":
-    test_flip_all_bits()
+    test_waves_fun()

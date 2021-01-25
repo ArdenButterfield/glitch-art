@@ -61,7 +61,6 @@ class ImageStorage:
     def as_pil_array(self):
         if self.im_type == NP_ARRAY:
             arr = Image.fromarray(np.uint8(self.im_representation))
-            print(arr)
             self.im_representation = arr
         elif self.im_type == PIL_ARRAY:
             pass
