@@ -1,21 +1,34 @@
+"""
+Glitcher
+
+Here it is... the code that makes photos into fun glitch art.
+
+-- Arden Butterfield 2021
+"""
+
+# Other peoples' stuff
 import numpy as np # For general processing.
-import sys # For exiting with error messages.
-from PIL import Image # For reading and writing images
 import logging
 from scipy.io import wavfile # For reading and writing to .wav
-import io
-from filetypes import *
-from image_storage import ImageStorage
 import random # for shuffle
 import json # For the logging structure
 import copy  # for deepcopy method
-from _glitch_util import *
+
+
+# My stuff
+from image_storage import ImageStorage
+from _glitch_util import \
+    _flip_bit_of_byte, \
+    _find_start_and_end, \
+    _get_even_slices
+import bug_eater
 
 logging.basicConfig()
 logging.getLogger().setLevel(logging.INFO)
 
 SAMPLERATE = 44100 # For exporting audio
 
+# TODO: test on more diverse images! specifically the pride flags lol.
 class Glitcher:
     def __init__(self, log_file="", max_checkpoints=-1):
 
@@ -220,10 +233,6 @@ class Glitcher:
                                                      np.random.randint(0,8))
         self.image.im_representation.write(bytes(list(im_array)))
 
-
-
-
-
     def shuffle(self, format=0, random_order=True, even_slices=False, chunks=2,
                 entire_image=True):
         """
@@ -284,7 +293,7 @@ class Glitcher:
             end_of_image = points[1]
 
         if even_slices:
-            slice_points = self._get_even_slices(
+            slice_points = _get_even_slices(
                 start_of_image, end_of_image, chunks)
         else:
             slice_points = list(np.random.randint(
@@ -309,9 +318,17 @@ class Glitcher:
         elif format == 2:
             self.image.im_representation.write(bytes(list(im_array)))
 
-    def _get_even_slices(self, start, end, chunks):
-        chunk_size = (end - start) // (chunks)
-        return [start + i * chunk_size for i in range(chunks + 1)]
+    def to_bug_eater(self, mode):
+        """
+        mode:
+        0: Bugs eat from black
+        1: Bugs eat from white
+
+        Create a board object of the image for the bug eater fun!
+        """
+        im = self.image.as_numpy_array()
+        board = bug_eater.Board(im, mode)
+        return board
 
     def set_checkpoint(self, name=""):
         """
@@ -364,7 +381,6 @@ class Glitcher:
 
         self.num_checkpoints -= 1
         return
-
 
     def _find_checkpoint_index(self, name):
         """

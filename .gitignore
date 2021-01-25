@@ -8,4 +8,5 @@ sources
 glitcher/venv
 **/.idea
 glitcher/*.png
+*.png
 glitcher/scratch.py

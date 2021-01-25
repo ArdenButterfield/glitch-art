@@ -3,6 +3,7 @@ from glitcher import Glitcher
 dir = '../images/raw/'
 branches = dir + 'branches.jpg'
 t1_png = dir + 'test1.png'
+flag = dir + 'pride_flag.png'
 
 def test_rotation():
     a = Glitcher()
@@ -96,5 +97,12 @@ def test_waves_fun():
         dims = a.save_wav('test.wav', 1)
         a.read_wav('test.wav', 0, dims)
     a.display()
+
+def test_bug_eater():
+
+    a = Glitcher()
+    a.load_image(t1_png)
+    b = a.to_bug_eater(0)
+
 if __name__ == "__main__":
-    test_jpeg_shuffle()
+    test_bug_eater()

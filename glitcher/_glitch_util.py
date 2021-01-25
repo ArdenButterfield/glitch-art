@@ -6,6 +6,10 @@ def _flip_bit_of_byte(byte, bit):
     mask = 1 << bit
     return byte ^ mask
 
+def _get_even_slices(start, end, chunks):
+    chunk_size = (end - start) // (chunks)
+    return [start + i * chunk_size for i in range(chunks + 1)]
+
 def _find_start_and_end(jpeg_image, im_size):
     """
     jpeg image is a list or numpy array of the bytes of the jpeg image.

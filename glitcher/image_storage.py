@@ -66,6 +66,8 @@ class ImageStorage:
             pass
         elif self.im_type == JPEG or self.im_type == PNG:
             self.im_representation = Image.open(self.im_representation)
+            if self.im_representation.mode in ("RGBA", "P"):
+                self.im_representation = self.im_representation.convert("RGB")
 
         self.im_type = PIL_ARRAY
         return self.im_representation
