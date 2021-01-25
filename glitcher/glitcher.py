@@ -150,25 +150,25 @@ class Glitcher:
             if type(file) != str:
                 assert TypeError("Filename must be a string for mode 0")
             data = wavfile.read(file)[1]
+
             if data.dtype == "int16":
                 data //= 256
                 data += 128
             data = data.astype("uint8")
 
-            # TODO: this is very baaaad. You should use a numpy meeeethod...
-            i = 0
-            im = np.swapaxes(data.reshape((3,-1)),0,1).reshape(height, width, 3)
-
-
+            im = np.swapaxes(data.reshape((3 , -1)), 0, 1)\
+                .reshape((height, width, 3))
 
         elif mode == 1:
             if type(file) != str:
                 assert TypeError("Filename must be a string for mode 1")
             data = wavfile.read(file)[1]
+
             if data.dtype == "int16":
                 data //= 256
                 data += 128
             data = data.astype("uint8")
+
             im = data.reshape((height, width, 3))
 
         elif mode == 2:
@@ -180,7 +180,10 @@ class Glitcher:
 
             data = np.concatenate([wavfile.read(f)[1] for f in file]).flatten()
             # [1] since wavfile.read() returns fs, data
-            im = np.swapaxes(data.reshape((3,-1)),0,1).reshape(height, width, 3)
+
+            im = np.swapaxes(data.reshape((3, -1)), 0, 1)\
+                .reshape((height, width, 3))
+
         self.image.im_representation = im
 
     def jpeg_noise(self, quality):
