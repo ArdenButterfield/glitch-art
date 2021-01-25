@@ -53,18 +53,15 @@ def test_noise():
 def test_numpy_shuffle():
     a = Glitcher()
     a.load_image(branches)
-    a.shuffle(0, chunks=10, random_order=False, even_slices=True)
+    a.shuffle(0, chunks=18, random_order=False, even_slices=True)
     a.display()
 
 def test_jpeg_shuffle():
     a = Glitcher()
     a.load_image(branches)
 
-    for i in range(2):
-        a.shuffle(2)
-        a.display()
-        a.shuffle(0) # To see if turning it into a numpy array and back helps?
-        a.display()
+    a.shuffle(2,chunks=20, even_slices=True, entire_image=False)
+    a.display()
 
 def test_bitflip():
     a = Glitcher()
@@ -100,4 +97,4 @@ def test_waves_fun():
         a.read_wav('test.wav', 0, dims)
     a.display()
 if __name__ == "__main__":
-    test_waves()
+    test_jpeg_shuffle()

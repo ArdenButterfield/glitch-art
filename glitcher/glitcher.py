@@ -6,6 +6,7 @@ from scipy.io import wavfile # For reading and writing to .wav
 import io
 from filetypes import *
 from image_storage import ImageStorage
+import random # for shuffle
 import json # For the logging structure
 import copy  # for deepcopy method
 
@@ -101,14 +102,14 @@ class Glitcher:
 
         if mode == 0:
             if type(file) != str:
-                assert TypeError("Filename must be a string for mode 0")
+                raise TypeError("Filename must be a string for mode 0")
             channels = np.concatenate([im[:, :, channel].flatten()
                                        for channel in range(3)])
             wavfile.write(file, SAMPLERATE, channels)
 
         elif mode == 1:
             if type(file) != str:
-                assert TypeError("Filename must be a string for mode 1")
+                raise TypeError("Filename must be a string for mode 1")
             channels = im.flatten()
             wavfile.write(file,SAMPLERATE, channels)
 
@@ -116,14 +117,14 @@ class Glitcher:
             if type(file) != list or \
                     len(file) != 3 or \
                     not max([type(file[i]) is str for i in range(3)]):
-                assert TypeError(
+                raise TypeError(
                     "For mode 2, file must be a list of three strings")
 
             for i in range(3):
                 data = im[:, :, i].flatten()
                 wavfile.write(file[i], SAMPLERATE, data)
         else:
-            assert ValueError("Unrecongnized mode")
+            raise ValueError("Unrecongnized mode")
         return width, height
 
     def read_wav(self, file, mode, dimensions):
@@ -148,42 +149,45 @@ class Glitcher:
 
         if mode == 0:
             if type(file) != str:
-                assert TypeError("Filename must be a string for mode 0")
+                raise TypeError("Filename must be a string for mode 0")
             data = wavfile.read(file)[1]
 
             if data.dtype == "int16":
                 data //= 256
                 data += 128
             data = data.astype("uint8")
-
+            data = data[:width * height * 3]
             im = np.swapaxes(data.reshape((3 , -1)), 0, 1)\
                 .reshape((height, width, 3))
 
         elif mode == 1:
             if type(file) != str:
-                assert TypeError("Filename must be a string for mode 1")
+                raise TypeError("Filename must be a string for mode 1")
             data = wavfile.read(file)[1]
 
             if data.dtype == "int16":
                 data //= 256
                 data += 128
             data = data.astype("uint8")
-
+            data = data[:width * height * 3]
             im = data.reshape((height, width, 3))
 
         elif mode == 2:
             if type(file) != list or \
                     len(file) != 3 or \
                     not max([type(file[i]) is str for i in range(3)]):
-                assert TypeError(
+                raise TypeError(
                     "For mode 2, file must be a list of three strings")
 
-            data = np.concatenate([wavfile.read(f)[1] for f in file]).flatten()
+            data = np.concatenate(
+                [wavfile.read(f)[1][:width * height] for f in file]
+            ).flatten()
             # [1] since wavfile.read() returns fs, data
 
             im = np.swapaxes(data.reshape((3, -1)), 0, 1)\
                 .reshape((height, width, 3))
-
+        else:
+            raise ValueError("Invalid mode.")
         self.image.im_representation = im
 
     def jpeg_noise(self, quality):
@@ -273,9 +277,7 @@ class Glitcher:
         entire_image:
         If true, the entire image will be shuffled. Otherwise, just a randomly
         chosen segment from the middle of the image will be.
-
-        TODO: well the numpy array (the boring one) works like a charm... but
-        the jpeg file is getting corrupted and angry. !?
+        Recommended: use entire_image=False for jpeg images. TODO: why?
         """
         if logging:
             self.log.append({'shuffle':[format, random_order, even_slices,
@@ -298,6 +300,8 @@ class Glitcher:
             # Based on https://docs.fileformat.com/image/jpeg/ and
             # https://en.wikipedia.org/wiki/JPEG_File_Interchange_Format#File_format_structure
             start_of_image, end_of_image = self._find_start_and_end(im_array, im_size)
+        else:
+            raise ValueError("Incorrect mode. Only 0 and 2 are implemented.")
 
         if not entire_image:
             points = np.random.randint(start_of_image, end_of_image, 2)
@@ -309,20 +313,18 @@ class Glitcher:
             slice_points = self._get_even_slices(
                 start_of_image, end_of_image, chunks)
         else:
-            slice_points = np.random.randint(
-                start_of_image, end_of_image, chunks - 1)
+            slice_points = list(np.random.randint(
+                start_of_image, end_of_image, chunks - 1))
             slice_points.sort()
-            slice_points = np.concatenate([
-                [start_of_image], slice_points, [end_of_image]])
+            slice_points = [start_of_image] + slice_points + [end_of_image]
 
         chunk_list =  [im_array[slice_points[i]:slice_points[i+1]] for
                       i in range(chunks)]
 
         if random_order:
-            np.random.shuffle(chunk_list)
+            random.shuffle(chunk_list)
         else:
-            chunk_list = np.flip(chunk_list)
-        chunk_list = [i for i in chunk_list] # TODO: booo... janky alert... and doesn't even work!!
+            chunk_list.reverse()
         chunk_list.insert(0, im_array[:slice_points[0]])
         chunk_list.append(im_array[slice_points[-1]:])
         im_array = np.concatenate(chunk_list, axis=0)
@@ -335,7 +337,7 @@ class Glitcher:
 
     def _get_even_slices(self, start, end, chunks):
         chunk_size = (end - start) // (chunks)
-        return np.array([start + i * chunk_size for i in range(chunks + 1)])
+        return [start + i * chunk_size for i in range(chunks + 1)]
 
     def set_checkpoint(self, name=""):
         """
