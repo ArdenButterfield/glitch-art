@@ -1,10 +1,11 @@
 **/.DS_Store
 **.pyc
 **.pdf
+glitcher/*.wav
 images/raw/*
 images/glitched/*
 sources
 glitcher/venv
 **/.idea
-glitcher/wb.png
+glitcher/*.png
 glitcher/scratch.py
