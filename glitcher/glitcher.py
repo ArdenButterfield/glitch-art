@@ -145,7 +145,6 @@ class Glitcher:
             self.log.append({'read_wav':[file, mode, dimensions]})
         self.image.as_numpy_array()
         width, height = dimensions
-        im = np.zeros((height, width, 3), dtype="int8")
 
         if mode == 0:
             if type(file) != str:
@@ -158,11 +157,9 @@ class Glitcher:
 
             # TODO: this is very baaaad. You should use a numpy meeeethod...
             i = 0
-            for channel in range(3):
-                for row in im:
-                    for col in row:
-                        col[channel] = data[i]
-                        i += 1
+            im = np.swapaxes(data.reshape((3,-1)),0,1).reshape(height, width, 3)
+
+
 
         elif mode == 1:
             if type(file) != str:
@@ -172,13 +169,7 @@ class Glitcher:
                 data //= 256
                 data += 128
             data = data.astype("uint8")
-
-            i = 0
-            for row in im:
-                for col in row:
-                    for channel in range(3):
-                        col[channel] = data[i]
-                        i += 1
+            im = data.reshape((height, width, 3))
 
         elif mode == 2:
             if type(file) != list or \
@@ -187,19 +178,9 @@ class Glitcher:
                 assert TypeError(
                     "For mode 2, file must be a list of three strings")
 
-            data = [wavfile.read(f)[1] for f in file]
+            data = np.concatenate([wavfile.read(f)[1] for f in file]).flatten()
             # [1] since wavfile.read() returns fs, data
-            for i in data:
-                if i.dtype == "int16":
-                    i //= 256
-                    i += 128
-                i = i.astype("uint8")
-            i = 0
-            for row in im:
-                for col in row:
-                    for channel in range(3):
-                        col[channel] = data[channel][i]
-                    i += 1
+            im = np.swapaxes(data.reshape((3,-1)),0,1).reshape(height, width, 3)
         self.image.im_representation = im
 
     def jpeg_noise(self, quality):

@@ -100,4 +100,4 @@ def test_waves_fun():
         a.read_wav('test.wav', 0, dims)
     a.display()
 if __name__ == "__main__":
-    test_waves_fun()
+    test_waves()
