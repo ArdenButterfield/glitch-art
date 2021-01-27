@@ -30,7 +30,7 @@ class Bug:
                 v, neighbor = self.min_neighbor()
             else:
                 v, neighbor = self._neighbor()
-            if self.mode == LIGHT_MODE and v = W
+            #if self.mode == LIGHT_MODE and v = W
 
     def infect_current_pos(self):
         if self.mode == LIGHT_MODE:

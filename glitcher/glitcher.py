@@ -20,7 +20,8 @@ from image_storage import ImageStorage
 from _glitch_util import \
     _flip_bit_of_byte, \
     _find_start_and_end, \
-    _get_even_slices
+    _get_even_slices, \
+    _cellular_automata
 import bug_eater
 
 logging.basicConfig()
@@ -58,6 +59,12 @@ class Glitcher:
         else:
             self._reconstruct_from_log(log_file)
 
+    ############################################################################
+    #
+    # Import/Export methods
+    #
+    ############################################################################
+
     def _reconstruct_from_log(self, log_file):
         self.logging = False
         with open(log_file) as f:
@@ -90,6 +97,117 @@ class Glitcher:
             self.log.append({"load_image":[image_file]})
 
         self.image.load_file(image_file)
+
+    def copy(self):
+        """
+        Create a copy of a Glitcher object.
+        Note that we do not log these copies. TODO: should we?
+        """
+        copied = Glitcher()
+        copied.image = self.image.copy()
+        copied.log = copy.deepcopy(self.log)
+        return copied
+
+    def save_image(self, file_name:str):
+        """
+        Save the image to [file_name], and saves the log to [file_name].txt
+        TODO: should we be logging saving images?
+        """
+
+        if self.logging:
+            self.log.append({"save_image": [file_name]})
+
+        image = self.image.as_pil_array()
+        image.show()
+        logging.info("Saving image")
+        image.save(file_name)
+
+        if self.logging:
+            logging.info("Writing log")
+            with open(f"{file_name}.json", 'w') as log_file:
+                log_file.write(json.dumps(self.log,indent=4))
+
+    def display(self):
+        """
+        Show the image in a window, using the PIL Image.show() method.
+        Don't log display. TODO: should we?
+        """
+        image = self.image.as_pil_array()
+        image.show()
+
+    ############################################################################
+    #
+    # Checkpoint stuff
+    #
+    ############################################################################
+
+    def set_checkpoint(self, name=""):
+        """
+        Set a checkpoint with the current state of the Glitcher object. A name
+        can optionally be provided, which makes it easier to jump back to a
+        specific checkpoint. If the number of checkpoints set reaches the max
+        number of checkpoints, setting another checkpoint will delete the oldest
+        checkpoint.
+        """
+
+        if self.logging:
+            self.log.append({"set_checkpoint":[name]})
+
+        if self.num_checkpoints == self.max_checkpoints:
+            self.checkpoints.pop(0)
+            self.num_checkpoints -= 1
+
+        self.checkpoints.append((self.copy(), name))
+        self.num_checkpoints += 1
+
+    def undo(self):
+        """
+        Undo the glitcher object to the most recent checkpoint.
+        """
+        self.revert_to_checkpoint()
+
+    def revert_to_checkpoint(self, name=""):
+        """
+        Revert to the most recent checkpoint with name. If name is not provided,
+        or is an empty string, revert to the most recent checkpoint.
+        """
+
+        if self.logging:
+            self.log.append({"revert_to_checkpoint":[name]})
+
+        if self.num_checkpoints == 0:
+            logging.warning("No checkpoints saved, unable to revert.")
+            return
+
+        if name:
+            index = self._find_checkpoint_index(name)
+            self.checkpoints = self.checkpoints[:index + 1]
+            self.num_checkpoints = index + 1
+
+        last = self.checkpoints.pop()
+        last_object = last[0]
+        self.image = last_object.image
+        # TODO: This is kinda clunky,
+        #  and I still need to figure out the logging.
+
+        self.num_checkpoints -= 1
+        return
+
+    def _find_checkpoint_index(self, name):
+        """
+        name: checkpoint name to search for.
+        returns the most recent index of that checkpoint name.
+        """
+        for i in range(self.num_checkpoints - 1, -1, -1):
+            if self.checkpoints[i][1] == name:
+                return i
+        return -1
+
+    ############################################################################
+    #
+    # Wav file methods
+    #
+    ############################################################################
 
     def save_wav(self, file, mode):
         """
@@ -201,6 +319,12 @@ class Glitcher:
         else:
             raise ValueError("Invalid mode.")
         self.image.im_representation = im
+
+    ############################################################################
+    #
+    # Jpeggish methods
+    #
+    ############################################################################
 
     def jpeg_noise(self, quality):
         """
@@ -318,6 +442,31 @@ class Glitcher:
         elif format == 2:
             self.image.im_representation.write(bytes(list(im_array)))
 
+    ############################################################################
+    #
+    # Misc. Glitch methods
+    #
+    ############################################################################
+    def elementary_automata(self, rule):
+        """
+        Does a cellular automata effect to the image. The rule should be an
+        integer between 0 and 255.
+        See here for more info:
+        https://en.wikipedia.org/wiki/Elementary_cellular_automaton
+        """
+        im = self.image.as_numpy_array()
+        row_len = len(im[0])
+        row_array = [0] * row_len
+        for row in im:
+            for cell in range(row_len):
+                if min(row[cell]) > 230:
+                    row_array[cell] = 1
+            for cell in range(row_len):
+                if row_array[cell] == 1:
+                    row[cell] = 1-row[cell]
+            row_array = _cellular_automata(row_array, row_len, rule)
+        self.image.im_representation = im
+
     def to_bug_eater(self, mode):
         """
         mode:
@@ -330,77 +479,11 @@ class Glitcher:
         board = bug_eater.Board(im, mode)
         return board
 
-    def set_checkpoint(self, name=""):
-        """
-        Set a checkpoint with the current state of the Glitcher object. A name
-        can optionally be provided, which makes it easier to jump back to a
-        specific checkpoint. If the number of checkpoints set reaches the max
-        number of checkpoints, setting another checkpoint will delete the oldest
-        checkpoint.
-        """
-
-        if self.logging:
-            self.log.append({"set_checkpoint":[name]})
-
-        if self.num_checkpoints == self.max_checkpoints:
-            self.checkpoints.pop(0)
-            self.num_checkpoints -= 1
-
-        self.checkpoints.append((self.copy(), name))
-        self.num_checkpoints += 1
-
-    def undo(self):
-        """
-        Undo the glitcher object to the most recent checkpoint.
-        """
-        self.revert_to_checkpoint()
-
-    def revert_to_checkpoint(self, name=""):
-        """
-        Revert to the most recent checkpoint with name. If name is not provided,
-        or is an empty string, revert to the most recent checkpoint.
-        """
-
-        if self.logging:
-            self.log.append({"revert_to_checkpoint":[name]})
-
-        if self.num_checkpoints == 0:
-            logging.warning("No checkpoints saved, unable to revert.")
-            return
-
-        if name:
-            index = self._find_checkpoint_index(name)
-            self.checkpoints = self.checkpoints[:index + 1]
-            self.num_checkpoints = index + 1
-
-        last = self.checkpoints.pop()
-        last_object = last[0]
-        self.image = last_object.image
-        # TODO: This is kinda clunky,
-        #  and I still need to figure out the logging.
-
-        self.num_checkpoints -= 1
-        return
-
-    def _find_checkpoint_index(self, name):
-        """
-        name: checkpoint name to search for.
-        returns the most recent index of that checkpoint name.
-        """
-        for i in range(self.num_checkpoints - 1, -1, -1):
-            if self.checkpoints[i][1] == name:
-                return i
-        return -1
-
-    def copy(self):
-        """
-        Create a copy of a Glitcher object.
-        Note that we do not log these copies. TODO: should we?
-        """
-        copied = Glitcher()
-        copied.image = self.image.copy()
-        copied.log = copy.deepcopy(self.log)
-        return copied
+    ############################################################################
+    #
+    # Utility image methods
+    #
+    ############################################################################
 
     def invert_colors(self):
         """
@@ -448,30 +531,3 @@ class Glitcher:
         logging.info(f"Flipping vertically")
         im = self.image.as_numpy_array()
         self.image.im_representation = np.flipud(im)
-
-    def save_image(self, file_name:str):
-        """
-        Save the image to [file_name], and saves the log to [file_name].txt
-        TODO: should we be logging saving images?
-        """
-
-        if self.logging:
-            self.log.append({"save_image": [file_name]})
-
-        image = self.image.as_pil_array()
-        image.show()
-        logging.info("Saving image")
-        image.save(file_name)
-
-        if self.logging:
-            logging.info("Writing log")
-            with open(f"{file_name}.json", 'w') as log_file:
-                log_file.write(json.dumps(self.log,indent=4))
-
-    def display(self):
-        """
-        Show the image in a window, using the PIL Image.show() method.
-        Don't log display. TODO: should we?
-        """
-        image = self.image.as_pil_array()
-        image.show()

@@ -104,5 +104,11 @@ def test_bug_eater():
     a.load_image(t1_png)
     b = a.to_bug_eater(0)
 
+def test_automata():
+    a = Glitcher()
+    a.load_image(dir + 'seagull.jpg')
+    a.elementary_automata(154)
+    a.save_image(dir+'automata_seagull.png')
+
 if __name__ == "__main__":
-    test_bug_eater()
+    test_automata()
