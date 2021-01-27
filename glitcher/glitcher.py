@@ -447,11 +447,6 @@ class Glitcher:
     # Misc. Glitch methods
     #
     ############################################################################
-    def _infection_condition(self,row):
-        """For elementary automata method, below.
-        What makes a cell turn infected?
-        """
-        return row > 230
 
     def elementary_automata(self, rule):
         """
@@ -460,17 +455,24 @@ class Glitcher:
         See here for more info:
         https://en.wikipedia.org/wiki/Elementary_cellular_automaton
         """
+        infection_condition = lambda x: x > 230
+
         im = self.image.as_numpy_array()
         row_len = len(im[0])
         row_array = np.zeros(row_len, dtype=np.int0)
+
         for row in range(len(im)):
-            row_array = row_array | np.all(
-                self._infection_condition(im[row]), axis=1).astype(np.int0)
+            row_array = row_array | \
+                        np.all(infection_condition(im[row]), axis=1)\
+                            .astype(np.int0)
+
             # TODO: JANKY ALERT!!!!
             for i in range(row_len):
                 if row_array[i]:
                     im[row][i] = 255 - im[row][i]
+
             row_array = _cellular_automata(row_array, row_len, rule)
+
         self.image.im_representation = im
 
     def to_bug_eater(self, mode):
