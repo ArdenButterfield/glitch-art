@@ -1,6 +1,7 @@
 """
 Boring utility functions that help with glitcher.py
 """
+import numpy as np
 
 def _flip_bit_of_byte(byte, bit):
     mask = 1 << bit
@@ -12,18 +13,13 @@ def _get_even_slices(start, end, chunks):
 
 def _cellular_automata(row, row_len, rule):
     """
-    Given a rule of universal cellular automata and a row, as a list, return the
+    Given a rule of universal cellular automata and a row, as a one-dimensional
+    numpy array, return the
     next row
     """
-    output = []
-    for cell in range(row_len):
-        l = row[(cell - 1) % row_len] << 2
-        c = row[(cell) % row_len] << 1
-        r = row[(cell + 1) % row_len]
-        input = l+c+r
-        mask = 1 << input
-        output.append((rule & mask) >> input)
-    return output
+    input = (row << 1) + (np.append(row[1:],row[0])) + (np.append(row[-1],row[:-1]) << 2)
+    mask = 1 << input
+    return (rule & mask) >> input
 
 def _find_start_and_end(jpeg_image, im_size):
     """
