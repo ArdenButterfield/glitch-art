@@ -23,6 +23,7 @@ from _glitch_util import \
     _get_even_slices, \
     _cellular_automata
 import bug_eater
+from bayer import Bayer
 
 logging.basicConfig()
 logging.getLogger().setLevel(logging.INFO)
@@ -51,6 +52,8 @@ class Glitcher:
         self.max_checkpoints = max_checkpoints
         self.checkpoints = []
         self.num_checkpoints = 0
+
+        self.bayer = Bayer()
 
         if not log_file:
             # No log file provided, so we are starting from scratch.
@@ -448,6 +451,24 @@ class Glitcher:
     #
     ############################################################################
 
+    def bayer_filter(self,n):
+        """
+        This is a bad version. Just to see if it works
+        """
+        bayer_matrix = self.bayer.get_scaled_matrix(n, 255)
+        m_dim = len(bayer_matrix)
+        im = self.image.as_numpy_array()
+        a = len(im)
+        for row in range(len(im)):
+            print(f"{row} of {a}")
+            for col in range(len(im[0])):
+                for channel in range(3):
+                    if im[row][col][channel] > bayer_matrix[row % m_dim][col % m_dim]:
+                        im[row][col][channel] = 255
+                    else:
+                        im[row][col][channel] = 0
+        self.image.im_representation = im
+
     def elementary_automata(self, rule=154):
         """
         Suggested rule: 154
@@ -468,7 +489,7 @@ class Glitcher:
         for row in range(len(im)):
             row_array = row_array | infection_condition(im[row])
 
-            mask = row_array==1
+            mask = row_array.astype(bool)
             im[row][mask] = symptom(im[row][mask])
 
             row_array = _cellular_automata(row_array, row_len, rule)
@@ -491,6 +512,11 @@ class Glitcher:
     # Utility image methods
     #
     ############################################################################
+
+    def make_grayscale(self):
+        im = self.image.as_pil_array()
+        im = im.convert('LA').convert('RGB')
+        self.image.im_representation = im
 
     def invert_colors(self):
         """

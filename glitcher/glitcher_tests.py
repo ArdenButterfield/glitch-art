@@ -110,5 +110,17 @@ def test_automata():
     a.elementary_automata(154)
     a.save_image(dir+'automata_seagull.png')
 
+def test_bayer():
+    a = Glitcher()
+    a.load_image('/Volumes/Lasagna/SCHOOL/Images/observe classmate/gamer.png')
+    a.bayer_filter(2)
+    a.save_image('/Volumes/Lasagna/SCHOOL/Images/observe classmate/gamerbayercolor_noinvert.png')
+
+def test_grayscale():
+    a = Glitcher()
+    a.load_image(branches)
+    a.make_grayscale()
+    a.display()
+
 if __name__ == "__main__":
-    test_automata()
+    test_bayer()
