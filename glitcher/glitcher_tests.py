@@ -122,5 +122,10 @@ def test_grayscale():
     a.make_grayscale()
     a.display()
 
+def test_load_binary():
+    a = Glitcher()
+    a.load_binary(branches ,32,200,grayscale=False)
+    a.display()
+
 if __name__ == "__main__":
-    test_bayer()
+    test_load_binary()

@@ -130,6 +130,15 @@ class Glitcher:
             with open(f"{file_name}.json", 'w') as log_file:
                 log_file.write(json.dumps(self.log,indent=4))
 
+    def load_binary(self, filename, width, height, grayscale=False):
+        with open(filename, 'rb') as file:
+            if grayscale:
+                size = width * height
+            else:
+                size = width * height * 3
+            raw_data = file.read(size)
+        self.image.load_binary(raw_data, width, height, grayscale)
+
     def display(self):
         """
         Show the image in a window, using the PIL Image.show() method.
