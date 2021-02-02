@@ -527,6 +527,51 @@ class Glitcher:
 
         self.image.im_representation = im.reshape((width, height, 3))
 
+    def fly_eye(self, box_dims, scale, x_backwards=False, y_backwards=False, in_place=False):
+        im = self.image.as_numpy_array()
+        if in_place:
+            src = im
+            dst = im
+        else:
+            new_im = im.copy()
+            src = im
+            dst = new_im
+        box_w, box_h = box_dims
+        y_max = len(im)
+        x_max = len(im[0])
+
+        if y_backwards:
+            y_0 = y_max - 1
+            y_step = -1
+            y_stop = -1
+        else:
+            y_0 = 0
+            y_step = 1
+            y_stop = y_max
+
+        if x_backwards:
+            x_0 = x_max - 1
+            x_step = -1
+            x_stop = -1
+        else:
+            x_0 = 0
+            x_step = 1
+            x_stop = x_max
+
+        for y in range(y_0, y_stop, y_step):
+            if not y % 10:
+                print(f"{y} of {y_max}")
+
+            y_t = (y // box_h) * box_h
+            y_ind = min(int(y_t + scale * (y - y_t)),y_max - 1)
+
+            for x in range(x_0, x_stop, x_step):
+                x_t = (x // box_w) * box_w
+                x_ind = min(int(x_t + scale * (x - x_t)),x_max - 1)
+                dst[y][x] = src[y_ind][x_ind]
+
+        self.image.im_representation = dst
+
     def to_bug_eater(self, mode):
         """
         mode:

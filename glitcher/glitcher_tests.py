@@ -134,5 +134,12 @@ def test_flatten_reshape():
         a.load_image(t1_png)
         a.flatten_reshape((1000,1000),i)
         a.display()
+
+def test_fly_eye():
+    a = Glitcher()
+    a.load_image(branches)
+    a.fly_eye((150,100),0.1,y_backwards=False, x_backwards=False, in_place=False)
+    a.display()
+
 if __name__ == "__main__":
-    test_flatten_reshape()
+    test_fly_eye()
