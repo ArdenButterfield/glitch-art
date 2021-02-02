@@ -44,3 +44,21 @@ def _find_start_and_end(jpeg_image, im_size):
     if not found:
         raise ValueError('Image is not formatted as a correct jpeg.')
     return start_of_image, end_of_image
+
+def _pad_with_val(arr, size, val):
+    """
+    arr: one dimensional array to be padded
+    size: new length of the array
+    val: what number the array should be padded with. negative means: pad with
+    the image repeated over and over again.
+    """
+    l = len(arr)
+    if l > size:
+        return arr[:size]
+    elif val < 0:
+        repeats = (size // l) + 1
+        a =  np.concatenate([arr for i in range(repeats)]).flatten()
+        return a[:size].astype("uint8")
+    else:
+        a = np.concatenate((arr, np.ones(size - l) * val))
+        return a.flatten().astype("uint8")

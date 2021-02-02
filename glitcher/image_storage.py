@@ -11,6 +11,8 @@ this class.
 """
 
 from filetypes import *
+from _glitch_util import _pad_with_val
+
 import numpy as np
 import sys
 from PIL import Image, ImageFile
@@ -37,29 +39,19 @@ class ImageStorage:
         else:
             sys.exit(f"File {filename} is not an accepted type.")
 
-    def _pad_with_zeroes(self, arr, size):
-        l = len(arr)
-        if l > size:
-            return arr[:l]
-        else:
-            return np.append(arr, np.zeros(size - l)).astype("uint8")
-
     def load_binary(self, raw_data, width, height, grayscale):
         data_array = np.array(list(raw_data))
 
         self.im_type = NP_ARRAY
         if grayscale:
-            data_array = self._pad_with_zeroes(data_array, width * height)
+            data_array = _pad_with_val(data_array, width * height, 0)
 
             data_array = np.concatenate((data_array,data_array,data_array))
             data_array = data_array.reshape([width,height,3], order='F')
             self.im_representation = np.rot90(data_array, -1, (0,1))
         else:
-            data_array = self._pad_with_zeroes(data_array, width * height * 3)
-            print(data_array.dtype)
+            data_array = _pad_with_val(data_array, width * height * 3, 0)
             self.im_representation = data_array.reshape([height, width, 3])
-
-
 
     def _as_bytes(self, format):
         assert self.im_type == PIL_ARRAY

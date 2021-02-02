@@ -21,7 +21,8 @@ from _glitch_util import \
     _flip_bit_of_byte, \
     _find_start_and_end, \
     _get_even_slices, \
-    _cellular_automata
+    _cellular_automata, \
+    _pad_with_val
 import bug_eater
 from bayer import Bayer
 
@@ -490,7 +491,6 @@ class Glitcher:
             np.all(x > 230, axis=1).astype(np.int0)
         symptom = lambda x: 255 - x
 
-
         im = self.image.as_numpy_array()
         row_len = len(im[0])
         row_array = np.zeros(row_len, dtype=np.int0)
@@ -503,6 +503,29 @@ class Glitcher:
 
             row_array = _cellular_automata(row_array, row_len, rule)
         self.image.im_representation = im
+
+    def flatten_reshape(self, newdims, fillwith=0):
+        """
+        newdims: a width height tuple.
+        fillwith: if the image is not large enough for the new dimensions, what
+        do we fill the remainder with?
+        0 – black
+        1 - white
+        2 - the image repeated again.
+        """
+        width, height = newdims
+        im = self.image.as_numpy_array()
+        im = im.flatten()
+
+        new_len = width * height * 3
+        if fillwith == 0:
+            im = _pad_with_val(im, new_len, 0)
+        elif fillwith == 1:
+            im = _pad_with_val(im, new_len, 255)
+        elif fillwith == 2:
+            im = _pad_with_val(im, new_len, -1)
+
+        self.image.im_representation = im.reshape((width, height, 3))
 
     def to_bug_eater(self, mode):
         """
@@ -521,6 +544,13 @@ class Glitcher:
     # Utility image methods
     #
     ############################################################################
+
+    def get_dimensions(self):
+        """
+        Returns width, height
+        """
+        im = self.image.as_numpy_array()
+        return len(im[0]),len(im)
 
     def make_grayscale(self):
         im = self.image.as_pil_array()

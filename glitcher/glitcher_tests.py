@@ -124,8 +124,15 @@ def test_grayscale():
 
 def test_load_binary():
     a = Glitcher()
-    a.load_binary(branches ,32,200,grayscale=False)
+    a.load_binary(branches,32,200,grayscale=False)
+    a.jpeg_noise(30)
     a.display()
 
+def test_flatten_reshape():
+    for i in range(3):
+        a = Glitcher()
+        a.load_image(t1_png)
+        a.flatten_reshape((1000,1000),i)
+        a.display()
 if __name__ == "__main__":
-    test_load_binary()
+    test_flatten_reshape()
