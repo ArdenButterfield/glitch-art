@@ -527,7 +527,24 @@ class Glitcher:
 
         self.image.im_representation = im.reshape((width, height, 3))
 
-    def fly_eye(self, box_dims, scale, x_backwards=False, y_backwards=False, in_place=False):
+    def fly_eye(self,
+                box_dims,
+                scale,
+                x_backwards=False,
+                y_backwards=False,
+                in_place=False):
+        """
+        A grid, a bit like a fly's eye, or some sort of funky lens.
+
+        box_dims: A width, height tuple
+        scale: How much area should be inside the box. I.e. scale=2 means that
+        an image twice the size of the box is shrunken down to fit in the box.
+        x_backwards: loop backwards horizontally.
+        y_backwards: loop backwards vertically.
+        in_place: Modifies the image in place, instead of working with a copy.
+        Note that if in_place=False, x_backwards and y_backwards will have no
+        effect.
+        """
         im = self.image.as_numpy_array()
         if in_place:
             src = im
@@ -598,6 +615,9 @@ class Glitcher:
         return len(im[0]),len(im)
 
     def make_grayscale(self):
+        """
+        Convert the image to grayscale.
+        """
         im = self.image.as_pil_array()
         im = im.convert('LA').convert('RGB')
         self.image.im_representation = im
