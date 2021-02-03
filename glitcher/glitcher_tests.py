@@ -141,5 +141,19 @@ def test_fly_eye():
     a.fly_eye((150,100),0.1,y_backwards=False, x_backwards=False, in_place=False)
     a.display()
 
+def test_extreme():
+    a = Glitcher()
+    a.load_image(branches)
+    a.pixel_extreme(-1)
+    a.display()
+
+def test_edge_detect():
+    a = Glitcher()
+    a.load_image(branches)
+    a.edge_detect()
+    a.display()
+    a.load_image(branches)
+    a.display()
+
 if __name__ == "__main__":
-    test_fly_eye()
+    test_edge_detect()

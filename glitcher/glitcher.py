@@ -13,6 +13,7 @@ from scipy.io import wavfile # For reading and writing to .wav
 import random # for shuffle
 import json # For the logging structure
 import copy  # for deepcopy method
+from PIL import ImageFilter
 
 
 # My stuff
@@ -463,7 +464,7 @@ class Glitcher:
 
     def bayer_filter(self,n):
         """
-        This is a bad version. Just to see if it works
+        TODO: This is inefficient. Make it better.
         """
         bayer_matrix = self.bayer.get_scaled_matrix(n, 255)
         m_dim = len(bayer_matrix)
@@ -588,6 +589,32 @@ class Glitcher:
                 dst[y][x] = src[y_ind][x_ind]
 
         self.image.im_representation = dst
+
+    def pixel_extreme(self, cutoff):
+        """
+        Send all pixel channels below the cutoff to 0 and all pixel channels
+        above the cutoff to 255. If cutoff is negative, use an auto cutoff.
+        (median)
+        """
+        im = self.image.as_numpy_array()
+        if cutoff < 0:
+            cutoff = np.mean(im)
+        im[im >= cutoff] = 255
+        im[im < cutoff] = 0
+        # I love numpy
+        self.image.im_representation = im
+
+    def edge_detect(self, kernel_dims=(3,3), kernel=(-1, -1, -1, -1, 8, -1, -1, -1, -1)):
+        """
+        ... Or whatever you want it to be.
+        source:
+        https://www.geeksforgeeks.org/python-edge-detection-using-pillow/
+        """
+        im = self.image.as_pil_array()
+        im = im.convert("L")
+        im = im.filter(ImageFilter.Kernel(kernel_dims, kernel, 1, 0))
+        im = im.convert("RGB")
+        self.image.im_representation = im
 
     def to_bug_eater(self, mode):
         """
