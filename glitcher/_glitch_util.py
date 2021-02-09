@@ -62,3 +62,34 @@ def _pad_with_val(arr, size, val):
     else:
         a = np.concatenate((arr, np.ones(size - l) * val))
         return a.flatten().astype("uint8")
+
+def _valid_automata_(rulebook):
+    """
+    This could all probably be done easier with regular expressions...
+    """
+    result = True
+    if not type(rulebook) is list:
+        result = False
+    for rule in rulebook:
+        if not (type(rule) is str and (
+                len(rule) == 5 or (len(rule) == 6 and rule[0] == '-'))):
+            result = False
+        for char in rule[-5:]:
+            if char not in "*01":
+                result = False
+    return result
+
+def _get_2d_automata_num(rulebook):
+    """
+    Rule format should be a list of strings, either 5 characters long made of
+    1, 0, and *, or 6 characters long, like above, with a - at the start.
+    The strings without a minus are the patterns that should map to 1, with * as
+    a wildcard. Strings with a minus are the patterns that should map to 0.
+    Later strings in the list override earlier ones. Returns -1 if rule is not
+    formatted correctly.
+    """
+    if not _valid_automata_(rulebook):
+        return -1
+    result = 0
+    for digit in range(2 ** 5):
+        print(str(bin(digit)))

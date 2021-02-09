@@ -34,7 +34,9 @@ SAMPLERATE = 44100 # For exporting audio
 
 # TODO: test on more diverse images! specifically the pride flags lol.
 class Glitcher:
-    def __init__(self, log_file="", max_checkpoints=-1):
+    def __init__(self,
+                 log_file="",
+                 max_checkpoints=-1):
 
         self._dispatch = {
 
@@ -132,7 +134,11 @@ class Glitcher:
             with open(f"{file_name}.json", 'w') as log_file:
                 log_file.write(json.dumps(self.log,indent=4))
 
-    def load_binary(self, filename, width, height, grayscale=False):
+    def load_binary(self,
+                    filename,
+                    width,
+                    height,
+                    grayscale=False):
         with open(filename, 'rb') as file:
             if grayscale:
                 size = width * height
@@ -223,7 +229,9 @@ class Glitcher:
     #
     ############################################################################
 
-    def save_wav(self, file, mode):
+    def save_wav(self,
+                 file,
+                 mode):
         """
         Save the image to a wav file, or list of wav files. There are three
         modes:
@@ -271,7 +279,10 @@ class Glitcher:
             raise ValueError("Unrecongnized mode")
         return width, height
 
-    def read_wav(self, file, mode, dimensions):
+    def read_wav(self,
+                 file,
+                 mode,
+                 dimensions):
         """
         Read the image from a wav file, or list of wav files. There are three
         modes:
@@ -349,7 +360,9 @@ class Glitcher:
             self.log.append({'jpeg_noise':[quality]})
         self.image.as_jpeg(quality)
 
-    def jpeg_bit_flip(self, num_bits, change_bytes=False):
+    def jpeg_bit_flip(self,
+                      num_bits,
+                      change_bytes=False):
         """
         Let's flip some bits in our pretty little jpeg!
         num_bits: number of bits we will flip.
@@ -371,7 +384,11 @@ class Glitcher:
                                                      np.random.randint(0,8))
         self.image.im_representation.write(bytes(list(im_array)))
 
-    def shuffle(self, format=0, random_order=True, even_slices=False, chunks=2,
+    def shuffle(self,
+                format=0,
+                random_order=True,
+                even_slices=False,
+                chunks=2,
                 entire_image=True):
         """
         Cuts the bytes like a deck of cards... well sort of.
@@ -505,7 +522,34 @@ class Glitcher:
             row_array = _cellular_automata(row_array, row_len, rule)
         self.image.im_representation = im
 
-    def flatten_reshape(self, newdims, fillwith=0):
+    def cellular_2d_automata(self, rule, high_cutoff=255, low_cutoff=0):
+        im = self.image.as_numpy_array()
+        rows = len(im)
+        cols = len(im[0])
+        for row in range(len(im)):
+            print(f"{row}/{rows}")
+            for col in range(len(im[0])):
+                for channel in range(3):
+                    score = 0
+                    for r, c in (
+                    (row - 1, col), (row, col - 1), (row, col), (row, col + 1),
+                    (row + 1, col)):
+                        if 0 < r < rows and 0 < c < cols and im[r][c][
+                            channel] >= high_cutoff:
+                            score += 1
+                            score <<= 1
+                    mask = 1 << score
+                    if (rule & mask) == 0:
+                        im[row][col][channel] = min(im[row][col][channel],
+                                                    low_cutoff)
+                    else:
+                        im[row][col][channel] = max(im[row][col][channel],
+                                                    high_cutoff)
+        self.image.im_representation = im
+
+    def flatten_reshape(self,
+                        newdims,
+                        fillwith=0):
         """
         newdims: a width height tuple.
         fillwith: if the image is not large enough for the new dimensions, what
@@ -604,9 +648,12 @@ class Glitcher:
         # I love numpy
         self.image.im_representation = im
 
-    def edge_detect(self, kernel_dims=(3,3), kernel=(-1, -1, -1, -1, 8, -1, -1, -1, -1)):
+    def edge_detect(self,
+                    kernel_dims=(3, 3),
+                    kernel=(-1, -1, -1, -1, 8, -1, -1, -1, -1)):
         """
-        ... Or whatever you want it to be.
+        ... Or whatever you want it to be. Note that the maximum kernel
+        dimensions are (5,5) because of PIL.
         source:
         https://www.geeksforgeeks.org/python-edge-detection-using-pillow/
         """
@@ -660,7 +707,7 @@ class Glitcher:
         im = self.image.as_numpy_array()
         self.image.im_representation = 255 - im
 
-    def rotate(self,turns:int):
+    def rotate(self, turns):
         """
         Rotate clockwise by the given number of turns.
         """

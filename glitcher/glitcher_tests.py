@@ -124,8 +124,7 @@ def test_grayscale():
 
 def test_load_binary():
     a = Glitcher()
-    a.load_binary(branches,32,200,grayscale=False)
-    a.jpeg_noise(30)
+    a.load_binary(dir + 'bfs',128,128,grayscale=False)
     a.display()
 
 def test_flatten_reshape():
@@ -155,5 +154,12 @@ def test_edge_detect():
     a.load_image(branches)
     a.display()
 
+def test_2d_auto():
+    a = Glitcher()
+    a.load_image(branches)
+    a.cellular_2d_automata(0xF0F0F0F0)
+    a.display()
+
+
 if __name__ == "__main__":
-    test_edge_detect()
+    test_load_binary()
