@@ -157,9 +157,11 @@ def test_edge_detect():
 def test_2d_auto():
     a = Glitcher()
     a.load_image(branches)
-    a.cellular_2d_automata(0xF0F0F0F0)
-    a.display()
+    for i in range(1000):
+        print(i)
+        a.cellular_2d_automata(0x99999999, high_cutoff=200)
+        a.save_image(dir + f't{i}autooutbranches.png', disp=False)
 
 
 if __name__ == "__main__":
-    test_load_binary()
+    test_2d_auto()

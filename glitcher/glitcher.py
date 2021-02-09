@@ -34,24 +34,8 @@ SAMPLERATE = 44100 # For exporting audio
 
 # TODO: test on more diverse images! specifically the pride flags lol.
 class Glitcher:
-    def __init__(self,
-                 log_file="",
-                 max_checkpoints=-1):
+    def __init__(self, max_checkpoints=-1):
 
-        self._dispatch = {
-
-            'load_image': self.load_image,
-            'save_wav': self.save_wav,
-            'read_wav': self.read_wav,
-            'set_checkpoint': self.set_checkpoint,
-            'revert_to_checkpoint': self.revert_to_checkpoint,
-            'invert_colors': self.invert_colors,
-            'rotate': self.rotate,
-            'horizontal_flip': self.horizontal_flip,
-            'vertical_flip': self.vertical_flip,
-            'save_image': self.save_image
-
-        }
         self.image = ImageStorage()
         self.max_checkpoints = max_checkpoints
         self.checkpoints = []
@@ -59,12 +43,6 @@ class Glitcher:
 
         self.bayer = Bayer()
 
-        if not log_file:
-            # No log file provided, so we are starting from scratch.
-            self.logging = True
-            self.log = []
-        else:
-            self._reconstruct_from_log(log_file)
 
     ############################################################################
     #
@@ -72,36 +50,7 @@ class Glitcher:
     #
     ############################################################################
 
-    def _reconstruct_from_log(self, log_file):
-        self.logging = False
-        with open(log_file) as f:
-            self.log = json.load(f)
-        for line in self.log:
-            # TODO: there should only be one func on the line.
-            #  Right? Why do I have it this way?
-            for func_name in line:
-                if func_name in self._dispatch:
-                    func = self._dispatch[func_name]
-                    args = line[func_name]
-                    func(*args)
-                elif func_name == 'save_image':
-                    # To avoid overwriting or cluttering things, we won't write
-                    # to image files while reconstructing.
-                    pass
-                else:
-                    logging.warning(
-                        "Unrecognized function name when reconstructing log: "
-                        + func_name)
-                    logging.warning("Skipping it.")
-
-        # Now that we are done reconstructing the log, we want to be adding to
-        # it, going forward.
-        self.logging = True
-
     def load_image(self, image_file:str):
-
-        if self.logging:
-            self.log.append({"load_image":[image_file]})
 
         self.image.load_file(image_file)
 
@@ -112,27 +61,18 @@ class Glitcher:
         """
         copied = Glitcher()
         copied.image = self.image.copy()
-        copied.log = copy.deepcopy(self.log)
         return copied
 
-    def save_image(self, file_name:str):
+    def save_image(self, file_name:str,disp=True):
         """
         Save the image to [file_name], and saves the log to [file_name].txt
-        TODO: should we be logging saving images?
         """
 
-        if self.logging:
-            self.log.append({"save_image": [file_name]})
-
         image = self.image.as_pil_array()
-        image.show()
+        if disp:
+            image.show()
         logging.info("Saving image")
         image.save(file_name)
-
-        if self.logging:
-            logging.info("Writing log")
-            with open(f"{file_name}.json", 'w') as log_file:
-                log_file.write(json.dumps(self.log,indent=4))
 
     def load_binary(self,
                     filename,
@@ -170,8 +110,6 @@ class Glitcher:
         checkpoint.
         """
 
-        if self.logging:
-            self.log.append({"set_checkpoint":[name]})
 
         if self.num_checkpoints == self.max_checkpoints:
             self.checkpoints.pop(0)
@@ -192,8 +130,6 @@ class Glitcher:
         or is an empty string, revert to the most recent checkpoint.
         """
 
-        if self.logging:
-            self.log.append({"revert_to_checkpoint":[name]})
 
         if self.num_checkpoints == 0:
             logging.warning("No checkpoints saved, unable to revert.")
@@ -246,8 +182,7 @@ class Glitcher:
         file.
         """
         logging.info("Saving to wav file")
-        if self.logging:
-            self.log.append({"save_wav":[file, mode]})
+
         im = self.image.as_numpy_array()
         width = len(im[0])
         height = len(im)
@@ -297,8 +232,6 @@ class Glitcher:
         the save_wav method.
         """
         logging.info("Reading wav file")
-        if self.logging:
-            self.log.append({'read_wav':[file, mode, dimensions]})
         self.image.as_numpy_array()
         width, height = dimensions
 
@@ -526,26 +459,23 @@ class Glitcher:
         im = self.image.as_numpy_array()
         rows = len(im)
         cols = len(im[0])
-        for row in range(len(im)):
-            print(f"{row}/{rows}")
-            for col in range(len(im[0])):
-                for channel in range(3):
-                    score = 0
-                    for r, c in (
-                    (row - 1, col), (row, col - 1), (row, col), (row, col + 1),
-                    (row + 1, col)):
-                        if 0 < r < rows and 0 < c < cols and im[r][c][
-                            channel] >= high_cutoff:
-                            score += 1
-                            score <<= 1
-                    mask = 1 << score
-                    if (rule & mask) == 0:
-                        im[row][col][channel] = min(im[row][col][channel],
-                                                    low_cutoff)
-                    else:
-                        im[row][col][channel] = max(im[row][col][channel],
-                                                    high_cutoff)
-        self.image.im_representation = im
+        infection_condition = lambda x: (x > high_cutoff).astype(int)
+        center = infection_condition(im)
+        up = np.concatenate((center[1:], [center[0]]))
+        down = np.concatenate(([center[-1]], center[:-1]))
+
+        right_order = [cols - 1] + [i for i in range(cols - 1)]
+        left_order = [i for i in range(1, cols)] + [0]
+        left_arr = np.empty_like(left_order)
+        right_arr = np.empty_like(right_order)
+        left_arr[left_order] = np.arange(cols)
+        right_arr[right_order] = np.arange(cols)
+
+        left = center[:, left_order]
+        right = center[:, right_order]
+        input = (up << 4) + (left << 3) + (center << 2) + (right << 1) + down
+        mask = 1 << input
+        self.image.im_representation = ((rule & mask) >> input) * 255
 
     def flatten_reshape(self,
                         newdims,
@@ -700,8 +630,6 @@ class Glitcher:
         """
         Invert the colors to their opposite.
         """
-        if self.logging:
-            self.log.append({"invert_colors":[]})
 
         logging.info("Inverting colors")
         im = self.image.as_numpy_array()
@@ -712,9 +640,6 @@ class Glitcher:
         Rotate clockwise by the given number of turns.
         """
 
-        if self.logging:
-            self.log.append({"rotate": [turns]})
-
         logging.info(f"Rotating {turns}")
         im = self.image.as_numpy_array()
         self.image.im_representation = np.rot90(im, turns, (1,0))
@@ -724,9 +649,6 @@ class Glitcher:
         Flip the image horizontally.
         """
 
-        if self.logging:
-            self.log.append({"horizontal_flip": []})
-
         logging.info(f"Flipping horizontally")
         im = self.image.as_numpy_array()
         self.image.im_representation = np.fliplr(im)
@@ -735,9 +657,6 @@ class Glitcher:
         """
         Flip the image vertically.
         """
-
-        if self.logging:
-            self.log.append({"vertical_flip": []})
 
         logging.info(f"Flipping vertically")
         im = self.image.as_numpy_array()
