@@ -423,11 +423,11 @@ class Glitcher:
         w = len(im[0])
 
         bayer_matrix = (np.tile(bayer_matrix,
-                               (int(w / len(bayer_matrix[0])) + 1)))[:,:w]
+                               (int(w / len(bayer_matrix[0])) + 1)))
         bayer_matrix = np.concatenate(
-            [bayer_matrix for _ in range(int(h / len(bayer_matrix)) + 1)])[:h]
+            [bayer_matrix for _ in range(int(h / len(bayer_matrix)) + 1)])
 
-        bayer_matrix = np.repeat(bayer_matrix, 3).reshape((h, w, 3))
+        bayer_matrix = np.repeat(bayer_matrix[:h,:w], 3).reshape((h, w, 3))
 
         im[im >= bayer_matrix] = 255
         im[im < bayer_matrix] = 0

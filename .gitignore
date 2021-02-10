@@ -10,3 +10,4 @@ glitcher/venv
 glitcher/*.png
 *.png
 glitcher/scratch.py
+**.pages
