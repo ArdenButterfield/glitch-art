@@ -87,9 +87,32 @@ def _get_2d_automata_num(rulebook):
     a wildcard. Strings with a minus are the patterns that should map to 0.
     Later strings in the list override earlier ones. Returns -1 if rule is not
     formatted correctly.
+
+    This is an unbelievably bad algorithm, but it's all I have the energy for
+    right now.
     """
     if not _valid_automata_(rulebook):
         return -1
+    strs = rulebook.copy()
+    i = 0
+    while i < len(strs):
+        if '*' in strs[i]:
+            ind = strs[i].index('*')
+            strs.append(strs[i][:ind] + '0' + strs[i][ind + 1:])
+            strs.append(strs[i][:ind] + '1' + strs[i][ind + 1:])
+            strs[i] = ''
+        i += 1
+    strs_result = [i for i in strs if i]
+    print(strs_result)
     result = 0
-    for digit in range(2 ** 5):
-        print(str(bin(digit)))
+    for s in strs_result:
+        prefix = s[0]
+        s = int(s[-5:], 2) # base 2
+        if prefix != '-':
+            result |= 1 << s
+    for s in strs_result:
+        prefix = s[0]
+        s = int(s[-5:], 2) # base 2
+        if prefix == '-':
+            result &= ~(1 << (s))
+    return result

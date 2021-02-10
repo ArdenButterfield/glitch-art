@@ -37,7 +37,7 @@ class ImageStorage:
             with open(filename, 'rb') as f:
                 self.im_representation = io.BytesIO(f.read())
         else:
-            sys.exit(f"File {filename} is not an accepted type.")
+            raise TypeError(f"File {filename} is not an accepted type.")
 
     def load_binary(self, raw_data, width, height, grayscale):
         data_array = np.array(list(raw_data))
@@ -90,7 +90,8 @@ class ImageStorage:
 
     def as_jpeg(self, quality=-1):
         if type(quality) not in [int, float]:
-            sys.exit("Invalid quality parameter in as_jpg. Must be a number")
+            raise ValueError(
+                "Invalid quality parameter in as_jpg. Must be a number")
         if quality < 0:
             if self.im_type in [NP_ARRAY, PNG]:
                 self.as_pil_array()
@@ -124,6 +125,6 @@ class ImageStorage:
         elif self.im_type in [PNG, JPEG]:
             rep = io.BytesIO(self.im_representation.getvalue())
         else:
-            sys.exit("TODO: copy other types of data?")
+            raise TypeError("Add support for other types here in copy()...")
 
         return ImageStorage(im_type=self.im_type, im_rep=rep)

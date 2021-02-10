@@ -11,9 +11,8 @@ import numpy as np # For general processing.
 import logging
 from scipy.io import wavfile # For reading and writing to .wav
 import random # for shuffle
-import json # For the logging structure
-import copy  # for deepcopy method
 from PIL import ImageFilter
+import sys
 
 
 # My stuff
@@ -23,7 +22,8 @@ from _glitch_util import \
     _find_start_and_end, \
     _get_even_slices, \
     _cellular_automata, \
-    _pad_with_val
+    _pad_with_val,\
+    _get_2d_automata_num
 import bug_eater
 from bayer import Bayer
 
@@ -90,7 +90,6 @@ class Glitcher:
     def display(self):
         """
         Show the image in a window, using the PIL Image.show() method.
-        Don't log display. TODO: should we?
         """
         image = self.image.as_pil_array()
         image.show()
@@ -143,8 +142,6 @@ class Glitcher:
         last = self.checkpoints.pop()
         last_object = last[0]
         self.image = last_object.image
-        # TODO: This is kinda clunky,
-        #  and I still need to figure out the logging.
 
         self.num_checkpoints -= 1
         return
@@ -455,12 +452,22 @@ class Glitcher:
             row_array = _cellular_automata(row_array, row_len, rule)
         self.image.im_representation = im
 
-    def cellular_2d_automata(self, rule, high_cutoff=255, low_cutoff=0):
-        im = self.image.as_numpy_array()
-        rows = len(im)
-        cols = len(im[0])
+    def cellular_2d_automata(self,
+                             rule,
+                             high_cutoff=255):
+
+        if type(rule) is list:
+            rule = _get_2d_automata_num(rule)
+        if type(rule) is not int or rule < 0:
+            raise ValueError("Automata rule is incorrectly formatted.")
         infection_condition = lambda x: (x > high_cutoff).astype(int)
+
+        im = self.image.as_numpy_array()
+
+        cols = len(im[0])
+
         center = infection_condition(im)
+
         up = np.concatenate((center[1:], [center[0]]))
         down = np.concatenate(([center[-1]], center[:-1]))
 
@@ -470,11 +477,12 @@ class Glitcher:
         right_arr = np.empty_like(right_order)
         left_arr[left_order] = np.arange(cols)
         right_arr[right_order] = np.arange(cols)
-
         left = center[:, left_order]
         right = center[:, right_order]
+
         input = (up << 4) + (left << 3) + (center << 2) + (right << 1) + down
         mask = 1 << input
+
         self.image.im_representation = ((rule & mask) >> input) * 255
 
     def flatten_reshape(self,
