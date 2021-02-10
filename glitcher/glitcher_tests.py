@@ -33,18 +33,6 @@ def test_checkpoints():
     a.revert_to_checkpoint('first')
     a.display()
 
-def test_log_reconstruction():
-    a = Glitcher()
-
-    a.load_image(branches)
-    a.rotate(1)
-    a.invert_colors()
-    a.save_image(dir + 'branches_logtest.png')
-    a.rotate(3)
-    b = Glitcher(log_file=(dir + 'branches_logtest.png.json'))
-    b.display()
-    a.display()
-
 def test_noise():
     a = Glitcher()
     a.load_image(branches)
@@ -112,9 +100,11 @@ def test_automata():
 
 def test_bayer():
     a = Glitcher()
-    a.load_image('/Volumes/Lasagna/SCHOOL/Images/observe classmate/gamer.png')
-    a.bayer_filter(2)
-    a.save_image('/Volumes/Lasagna/SCHOOL/Images/observe classmate/gamerbayercolor_noinvert.png')
+    a.load_image(branches)
+    a.invert_colors()
+    a.bayer_filter(5)
+    a.invert_colors()
+    a.display()
 
 def test_grayscale():
     a = Glitcher()
@@ -163,4 +153,4 @@ def test_2d_auto():
 
 
 if __name__ == "__main__":
-    test_2d_auto()
+    test_bayer()

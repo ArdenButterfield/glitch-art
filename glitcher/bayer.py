@@ -1,8 +1,12 @@
 import numpy as np
 class Bayer:
-    def __init__(self):
+    def __init__(self,initial=-1):
         self.matrices = []
-        self.matrices.append(np.array([[0,2],[3,1]]))
+        if initial == -1:
+            self.initial = np.array([[0,2],[3,1]])
+        else:
+            self.initial = np.array(initial)
+        self.matrices.append(self.initial)
         self.m_len = 1
 
     def get_matrix(self, n):
@@ -16,9 +20,11 @@ class Bayer:
             m_prev_scaled = self.get_matrix(n - 1) * 4
 
             top = np.concatenate(
-                (m_prev_scaled, m_prev_scaled + 2), axis=1)
+                (m_prev_scaled + self.initial[0][0],
+                 m_prev_scaled + self.initial[0][1]), axis=1)
             bottom = np.concatenate(
-                (m_prev_scaled + 3, m_prev_scaled + 1), axis=1)
+                (m_prev_scaled + self.initial[1][0],
+                 m_prev_scaled + self.initial[1][1]), axis=1)
             m = np.concatenate((top,bottom),axis=0)
 
             self.m_len += 1

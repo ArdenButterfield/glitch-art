@@ -14,10 +14,11 @@ def _get_even_slices(start, end, chunks):
 def _cellular_automata(row, row_len, rule):
     """
     Given a rule of universal cellular automata and a row, as a one-dimensional
-    numpy array, return the
-    next row
+    numpy array, return the next row.
     """
-    input = (row << 1) + (np.append(row[1:],row[0])) + (np.append(row[-1],row[:-1]) << 2)
+    input = (row << 1) + \
+            (np.append(row[1:],row[0])) + \
+            (np.append(row[-1],row[:-1]) << 2)
     mask = 1 << input
     return (rule & mask) >> input
 

@@ -409,22 +409,29 @@ class Glitcher:
     #
     ############################################################################
 
-    def bayer_filter(self,n):
+    def bayer_filter(self,n,initial=-1):
         """
-        TODO: This is inefficient. Make it better.
+        TODO: It works, but why are the colors so bleh?
         """
+        if type(initial) is list and len(initial) >= 2 and len(initial[0]) >= 2:
+            self.bayer = Bayer(initial=initial)
+
         bayer_matrix = self.bayer.get_scaled_matrix(n, 255)
-        m_dim = len(bayer_matrix)
+
         im = self.image.as_numpy_array()
-        a = len(im)
-        for row in range(len(im)):
-            print(f"{row} of {a}")
-            for col in range(len(im[0])):
-                for channel in range(3):
-                    if im[row][col][channel] > bayer_matrix[row % m_dim][col % m_dim]:
-                        im[row][col][channel] = 255
-                    else:
-                        im[row][col][channel] = 0
+        h = len(im)
+        w = len(im[0])
+
+        bayer_matrix = (np.tile(bayer_matrix,
+                               (int(w / len(bayer_matrix[0])) + 1)))[:,:w]
+        bayer_matrix = np.concatenate(
+            [bayer_matrix for _ in range(int(h / len(bayer_matrix)) + 1)])[:h]
+
+        bayer_matrix = np.repeat(bayer_matrix, 3).reshape((h, w, 3))
+
+        im[im >= bayer_matrix] = 255
+        im[im < bayer_matrix] = 0
+
         self.image.im_representation = im
 
     def elementary_automata(self, rule=154):
