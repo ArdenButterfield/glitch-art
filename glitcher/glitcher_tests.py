@@ -106,6 +106,19 @@ def test_bayer():
     a.invert_colors()
     a.display()
 
+def test_fancy_bayer():
+    a = Glitcher()
+    a.load_image(branches)
+    a.bayer_filter(1, initial=[[i for i in range(40)]])
+    a.display()
+    a.load_image(branches)
+    a.bayer_filter(1, initial=[[0,2,0]])
+    a.display()
+    a.load_image(branches)
+    a.bayer_filter(5, initial=[[3,3],[0,3]])
+    a.invert_colors()
+    a.display()
+
 def test_grayscale():
     a = Glitcher()
     a.load_image(branches)
@@ -148,9 +161,8 @@ def test_2d_auto():
     a = Glitcher()
     a.load_image(branches)
     a.display()
-    a.cellular_2d_automata(['*****'])
+    a.cellular_2d_automata(['**1**'])
     a.display()
 
-
 if __name__ == "__main__":
-    test_bayer()
+    test_fancy_bayer()

@@ -104,7 +104,6 @@ def _get_2d_automata_num(rulebook):
             strs[i] = ''
         i += 1
     strs_result = [i for i in strs if i]
-    print(strs_result)
     result = 0
     for s in strs_result:
         prefix = s[0]

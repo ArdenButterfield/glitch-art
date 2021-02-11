@@ -6,6 +6,9 @@ class Bayer:
             self.initial = np.array([[0,2],[3,1]])
         else:
             self.initial = np.array(initial)
+        self.init_height = len(self.initial)
+        self.init_width = len(self.initial[0])
+        self.init_size = self.init_height * self.init_width
         self.matrices.append(self.initial)
         self.m_len = 1
 
@@ -17,20 +20,16 @@ class Bayer:
         if self.m_len > n:
             return self.matrices[n]
         else:
-            m_prev_scaled = self.get_matrix(n - 1) * 4
+            m_prev_scaled = self.get_matrix(n - 1) * self.init_size
 
-            top = np.concatenate(
-                (m_prev_scaled + self.initial[0][0],
-                 m_prev_scaled + self.initial[0][1]), axis=1)
-            bottom = np.concatenate(
-                (m_prev_scaled + self.initial[1][0],
-                 m_prev_scaled + self.initial[1][1]), axis=1)
-            m = np.concatenate((top,bottom),axis=0)
-
+            m = np.concatenate(
+                [np.concatenate([m_prev_scaled + self.initial[i][j]
+                                 for j in range(self.init_width)],axis=1 )
+                for i in range(self.init_height)], axis=0)
             self.m_len += 1
             self.matrices.append(m)
 
             return(m)
 
     def get_scaled_matrix(self, n, max_val):
-        return self.get_matrix(n) * (max_val / (4 ** (n + 1)))
+        return self.get_matrix(n) * (max_val / (self.init_size ** (n + 1)))

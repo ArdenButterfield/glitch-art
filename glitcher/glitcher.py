@@ -413,7 +413,7 @@ class Glitcher:
         """
         TODO: It works, but why are the colors so bleh?
         """
-        if type(initial) is list and len(initial) >= 2 and len(initial[0]) >= 2:
+        if type(initial) is list and type(initial[0]) is list:
             self.bayer = Bayer(initial=initial)
 
         bayer_matrix = self.bayer.get_scaled_matrix(n, 255)
@@ -461,8 +461,17 @@ class Glitcher:
 
     def cellular_2d_automata(self,
                              rule,
-                             high_cutoff=255):
-
+                             high_cutoff=100):
+        """
+        Rule can be either a number, or a list that will be converted to a
+        number.
+        If it's a list: Rule format should be a list of strings, either 5
+        characters long made of 1, 0, and *, or 6 characters long, like above,
+        with a - at the start. The strings without a minus are the patterns that
+        should map to 1, with * as a wildcard. Strings with a minus are the
+        patterns that should map to 0. Later strings in the list override
+        earlier ones.
+        """
         if type(rule) is list:
             rule = _get_2d_automata_num(rule)
         if type(rule) is not int or rule < 0:
