@@ -3,6 +3,7 @@ from glitcher import Glitcher
 dir = '../images/raw/'
 branches = dir + 'branches.jpg'
 t1_png = dir + 'test1.png'
+branches_bmp = dir + 'branches.bmp'
 flag = dir + 'pride_flag.png'
 
 def test_rotation():
@@ -164,5 +165,34 @@ def test_2d_auto():
     a.cellular_2d_automata(['**1**'])
     a.display()
 
+def test_bmp():
+    a = Glitcher()
+    a.load_image(branches_bmp)
+    a.rotate(1)
+    a.display()
+
+def test_bmp_shuffle():
+    #TODO: why isn't it working?
+    a = Glitcher()
+    a.load_image(branches)
+    a.shuffle(format=1,entire_image=False, even_slices=True, chunks=40)
+    print("shuffled")
+    print(a.image.im_representation, a.image.im_type)
+    a.display()
+
+def test_bmp_dims():
+    a = Glitcher()
+    a.load_image(branches)
+    a.rotate(2)
+    print(a.image.im_representation, len(a.image.im_representation[0]), len(a.image.im_representation))
+    print(a.get_bmp_dims())
+
+def test_bmp_rescale():
+    a = Glitcher()
+    a.load_image(branches)
+    w, h = a.get_bmp_dims()
+    a.rescale_bmp_dims((w+1,h-1))
+    a.save_image('testout.bmp')
+
 if __name__ == "__main__":
-    test_fancy_bayer()
+    test_bmp_rescale()

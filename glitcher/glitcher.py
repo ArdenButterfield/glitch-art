@@ -277,9 +277,42 @@ class Glitcher:
 
     ############################################################################
     #
-    # Jpeggish methods
+    # Image file type methods
     #
     ############################################################################
+
+    def get_bmp_dims(self):
+        im = self.image.as_bmp()
+        im_array = np.array(list(im.getvalue()))
+
+        width = im_array[0x12] + \
+                im_array[0x13] * 0x100 + \
+                im_array[0x14] * 0x10000 + \
+                im_array[0x15] * 0x1000000
+        height = im_array[0x16] + \
+                im_array[0x17] * 0x100 + \
+                im_array[0x18] * 0x10000 + \
+                im_array[0x19] * 0x1000000
+
+        return width, height
+
+    def rescale_bmp_dims(self, newdims):
+        width, height = newdims
+        
+        im = self.image.as_bmp()
+
+        im_array = np.array(list(im.getvalue()))
+        print(im_array[:50])
+        im_array[0x12] = width & 0xFF
+        im_array[0x13] = (width & 0xFF00) >> 0x8
+        im_array[0x14] = (width & 0xFF0000) >> 0x10
+        im_array[0x15] = (width & 0xFF000000) >> 0x18
+        im_array[0x16] = height & 0xFF
+        im_array[0x17] = (height & 0xFF00) >> 0x8
+        im_array[0x18] = (height & 0xFF0000) >> 0x10
+        im_array[0x19] = (height & 0xFF000000) >> 0x18
+        print(im_array[:50])
+        self.image.im_representation.write(bytes(list(im_array)))
 
     def jpeg_noise(self, quality):
         """
@@ -327,7 +360,7 @@ class Glitcher:
 
         format:
         0 -- Numpy array
-        1 -- PNG
+        1 -- BMP
         2 -- JPEG
 
         random_order:
@@ -347,10 +380,7 @@ class Glitcher:
         chosen segment from the middle of the image will be.
         Recommended: use entire_image=False for jpeg images. TODO: why?
         """
-        if logging:
-            self.log.append({'shuffle':[format, random_order, even_slices,
-                                        chunks, entire_image]})
-        if format == 0:
+        if format == 0: # NUMPY
             im = self.image.as_numpy_array()
             height = len(im)
             width = len(im[0])
@@ -359,8 +389,25 @@ class Glitcher:
             im_array = np.reshape(im, (im_size, channels))
             start_of_image = 0
             end_of_image = im_size
+        elif format == 1: # BMP
+            # TODO: Why isn't this doing anything???
+            im = self.image.as_bmp()
+            im_array = np.array(list(im.getvalue()))
 
-        elif format == 2:
+            # Offset to the start of pixel data is stored little endian
+            # (at least on my machine) starting at the 10th byte.
+            start_of_image = im_array[10] + \
+                             im_array[11] * 0x100 + \
+                             im_array[12] * 0x10000 + \
+                             im_array[13] * 0x1000000
+
+            # if I understand correctly, there is no end of image code.
+            """end_of_image = im_array[2] + \
+                             im_array[3] * 0x10 + \
+                             im_array[4] * 0x100 + \
+                             im_array[5] * 0x1000"""
+            end_of_image = len(im_array) - 1
+        elif format == 2: # JPEG
             im = self.image.as_jpeg()
             im_array = np.array(list(im.getvalue()))
             im_size = len(im_array)
@@ -400,7 +447,8 @@ class Glitcher:
         if format == 0:
             im = np.reshape(im_array, (height, width, channels))
             self.image.im_representation = im
-        elif format == 2:
+
+        elif format in [1, 2]: # BMP or JPEG
             self.image.im_representation.write(bytes(list(im_array)))
 
     ############################################################################

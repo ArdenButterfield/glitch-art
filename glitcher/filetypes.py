@@ -3,3 +3,4 @@ PIL_ARRAY = 1
 JPEG = 2
 PNG = 3
 WAV = 4
+BMP = 5

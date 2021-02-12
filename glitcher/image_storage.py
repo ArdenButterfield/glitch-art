@@ -30,14 +30,15 @@ class ImageStorage:
         lower_name = filename.lower()
         if lower_name.endswith('.png'):
             self.im_type = PNG
-            with open(filename, 'rb') as f:
-                self.im_representation = io.BytesIO(f.read())
         elif lower_name.endswith('.jpg' or '.jpeg'):
             self.im_type = JPEG
-            with open(filename, 'rb') as f:
-                self.im_representation = io.BytesIO(f.read())
+        elif lower_name.endswith('.bmp'):
+            self.im_type = BMP
         else:
             raise TypeError(f"File {filename} is not an accepted type.")
+
+        with open(filename, 'rb') as f:
+            self.im_representation = io.BytesIO(f.read())
 
     def load_binary(self, raw_data, width, height, grayscale):
         data_array = np.array(list(raw_data))
@@ -60,12 +61,14 @@ class ImageStorage:
             self.im_representation.save(byte_array, format='PNG')
         elif format == JPEG:
             self.im_representation.save(byte_array, format='JPEG')
+        elif format == BMP:
+            self.im_representation.save(byte_array, format='BMP')
         return byte_array
 
     def as_numpy_array(self):
         if self.im_type == NP_ARRAY:
             pass
-        elif self.im_type == JPEG or self.im_type == PNG:
+        elif self.im_type in [JPEG, PNG, BMP]:
             self.as_pil_array()
             self.im_representation = np.array(self.im_representation)
         elif self.im_type == PIL_ARRAY:
@@ -75,13 +78,15 @@ class ImageStorage:
         return self.im_representation
 
     def as_pil_array(self):
+        print("converting to pil array", self.im_representation, self.im_type)
         if self.im_type == NP_ARRAY:
             arr = Image.fromarray(np.uint8(self.im_representation))
             self.im_representation = arr
         elif self.im_type == PIL_ARRAY:
             pass
-        elif self.im_type == JPEG or self.im_type == PNG:
+        elif self.im_type in [JPEG, PNG, BMP]:
             self.im_representation = Image.open(self.im_representation)
+
             if self.im_representation.mode in ("RGBA", "P"):
                 self.im_representation = self.im_representation.convert("RGB")
 
@@ -93,7 +98,7 @@ class ImageStorage:
             raise ValueError(
                 "Invalid quality parameter in as_jpg. Must be a number")
         if quality < 0:
-            if self.im_type in [NP_ARRAY, PNG]:
+            if self.im_type in [NP_ARRAY, PNG, BMP]:
                 self.as_pil_array()
                 self.im_representation = self._as_bytes(JPEG)
             elif self.im_type == PIL_ARRAY:
@@ -109,7 +114,7 @@ class ImageStorage:
         return self.im_representation
 
     def as_png(self):
-        if self.im_type in [NP_ARRAY, JPEG]:
+        if self.im_type in [NP_ARRAY, JPEG, BMP]:
             self.as_pil_array()
             self.im_representation = self._as_bytes(PNG)
         elif self.im_type == PIL_ARRAY:
@@ -118,11 +123,22 @@ class ImageStorage:
         self.im_type = JPEG
         return self.im_representation
 
+    def as_bmp(self):
+        if self.im_type == BMP:
+            return self.im_representation
+        else:
+            self.as_pil_array()
+            byte_array = io.BytesIO()
+            self.im_representation.save(byte_array, format='BMP')
+            self.im_representation = byte_array
+        self.im_type = BMP
+        return self.im_representation
+
     def copy(self):
         if self.im_type in [NP_ARRAY, PIL_ARRAY]:
             rep = self.im_representation.copy()
 
-        elif self.im_type in [PNG, JPEG]:
+        elif self.im_type in [PNG, JPEG, BMP]:
             rep = io.BytesIO(self.im_representation.getvalue())
         else:
             raise TypeError("Add support for other types here in copy()...")
