@@ -11,7 +11,7 @@ import numpy as np # For general processing.
 import logging
 from scipy.io import wavfile # For reading and writing to .wav
 import random # for shuffle
-from PIL import ImageFilter
+from PIL import ImageFilter, ImageEnhance
 import sys
 
 
@@ -312,6 +312,7 @@ class Glitcher:
         im_array[0x18] = (height & 0xFF0000) >> 0x10
         im_array[0x19] = (height & 0xFF000000) >> 0x18
         print(im_array[:50])
+        # self.image.im_representation.write(bytes(list(im_array)))
         self.image.im_representation.write(bytes(list(im_array)))
 
     def jpeg_noise(self, quality):
@@ -733,3 +734,22 @@ class Glitcher:
         logging.info(f"Flipping vertically")
         im = self.image.as_numpy_array()
         self.image.im_representation = np.flipud(im)
+
+    def enhance(self, style, value):
+        """
+        Some basic image enhancing, using our trusty friend PIL. Options for
+        style are: color, contrast, brightness, and sharpness.
+        """
+        im = self.image.as_pil_array()
+        if style == "color":
+            enhancer = ImageEnhance.Color(im)
+        elif style == "contrast":
+            enhancer = ImageEnhance.Contrast(im)
+        elif style == "brightness":
+            enhancer = ImageEnhance.Brightness(im)
+        elif style == "sharpness":
+            enhancer = ImageEnhance.Sharpness(im)
+        else:
+            raise ValueError("Unrecognized style value in enhance method.")
+
+        self.image.im_representation = enhancer.enhance(value)

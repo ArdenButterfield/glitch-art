@@ -194,5 +194,15 @@ def test_bmp_rescale():
     a.rescale_bmp_dims((w+1,h-1))
     a.save_image('testout.bmp')
 
+def test_enhance():
+    # ENHANCE!!
+    a = Glitcher()
+    a.load_image(branches)
+    for style in ("color", "contrast", "brightness", "sharpness"):
+        a.set_checkpoint()
+        a.enhance(style, 8)
+        a.display()
+        a.undo()
+
 if __name__ == "__main__":
-    test_bmp_rescale()
+    test_enhance()
