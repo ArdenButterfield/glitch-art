@@ -115,14 +115,12 @@ class Glitcher:
         checkpoint.
         """
 
-
         if self.num_checkpoints == self.max_checkpoints:
             self.checkpoints.pop(0)
             self.num_checkpoints -= 1
 
         self.checkpoints.append((self.copy(), name))
         self.num_checkpoints += 1
-
     def undo(self):
         """
         Undo the glitcher object to the most recent checkpoint.
@@ -134,7 +132,6 @@ class Glitcher:
         Revert to the most recent checkpoint with name. If name is not provided,
         or is an empty string, revert to the most recent checkpoint.
         """
-
 
         if self.num_checkpoints == 0:
             logging.warning("No checkpoints saved, unable to revert.")
@@ -304,7 +301,7 @@ class Glitcher:
 
     def rescale_bmp_dims(self, newdims):
         width, height = newdims
-        
+
         im = self.image.as_bmp()
 
         im_array = np.array(list(im.getvalue()))

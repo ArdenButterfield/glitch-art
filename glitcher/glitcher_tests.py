@@ -211,4 +211,4 @@ def test_smear():
     a.display()
 
 if __name__ == "__main__":
-    test_smear()
+    test_checkpoints()
