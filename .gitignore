@@ -12,3 +12,4 @@ glitcher/*.png
 glitcher/scratch.py
 **.pages
 images
+.ipynb_checkpoints

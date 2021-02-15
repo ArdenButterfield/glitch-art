@@ -16,6 +16,7 @@ from _glitch_util import _pad_with_val
 import numpy as np
 import sys
 from PIL import Image, ImageFile
+
 import io
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True  # otherwise we get more errors when

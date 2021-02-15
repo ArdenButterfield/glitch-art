@@ -204,5 +204,11 @@ def test_enhance():
         a.display()
         a.undo()
 
+def test_smear():
+    a = Glitcher()
+    a.load_image(branches)
+    a.smear(30)
+    a.display()
+
 if __name__ == "__main__":
-    test_enhance()
+    test_smear()

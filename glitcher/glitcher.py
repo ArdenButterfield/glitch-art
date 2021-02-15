@@ -12,8 +12,7 @@ import logging
 from scipy.io import wavfile # For reading and writing to .wav
 import random # for shuffle
 from PIL import ImageFilter, ImageEnhance
-import sys
-
+import IPython # For inline display
 
 # My stuff
 from image_storage import ImageStorage
@@ -93,6 +92,13 @@ class Glitcher:
         """
         image = self.image.as_pil_array()
         image.show()
+
+    def display_inline(self):
+        """
+        Useful for Jupyter Notebooks.
+        """
+        image = self.image.as_pil_array()
+        IPython.display.display(image)
 
     ############################################################################
     #
@@ -458,7 +464,23 @@ class Glitcher:
     #
     ############################################################################
 
-    def bayer_filter(self,n,initial=-1):
+    def _dist(self, cell1, cell2):
+        return
+
+    def smear(self, distance):
+        d_sq = distance ** 2
+
+        im = self.image.as_numpy_array()
+        for row in range(1, len(im)):
+            print(row)
+            for col in range(len(im[0])):
+                cell_above = im[row - 1][col]
+                curr_cell = im[row][col]
+                if sum((cell_above - curr_cell) ** 2) < d_sq:
+                    im[row][col] = cell_above
+        self.image.im_representation = im
+
+    def dither(self,n,initial=-1):
         """
         TODO: It works, but why are the colors so bleh?
         """
@@ -734,6 +756,18 @@ class Glitcher:
         logging.info(f"Flipping vertically")
         im = self.image.as_numpy_array()
         self.image.im_representation = np.flipud(im)
+
+    def contrast(self, value):
+        self.enhance("contrast", value)
+
+    def color(self, value):
+        self.enhance("color", value)
+
+    def brightness(self, value):
+        self.enhance("brightness", value)
+
+    def sharpness(self, value):
+        self.enhance("sharpness", value)
 
     def enhance(self, style, value):
         """
