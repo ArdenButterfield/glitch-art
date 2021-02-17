@@ -166,7 +166,7 @@ class Glitcher:
     ############################################################################
 
     def save_wav(self,
-                 file,
+                 file_name,
                  mode):
         """
         Save the image to a wav file, or list of wav files. There are three
@@ -188,34 +188,34 @@ class Glitcher:
         height = len(im)
 
         if mode == 0:
-            if type(file) != str:
+            if type(file_name) != str:
                 raise TypeError("Filename must be a string for mode 0")
             channels = np.concatenate([im[:, :, channel].flatten()
                                        for channel in range(3)])
-            wavfile.write(file, SAMPLERATE, channels)
+            wavfile.write(file_name, SAMPLERATE, channels)
 
         elif mode == 1:
-            if type(file) != str:
+            if type(file_name) != str:
                 raise TypeError("Filename must be a string for mode 1")
             channels = im.flatten()
-            wavfile.write(file,SAMPLERATE, channels)
+            wavfile.write(file_name,SAMPLERATE, channels)
 
         elif mode == 2:
-            if type(file) != list or \
-                    len(file) != 3 or \
-                    not max([type(file[i]) is str for i in range(3)]):
+            if type(file_name) != list or \
+                    len(file_name) != 3 or \
+                    not max([type(file_name[i]) is str for i in range(3)]):
                 raise TypeError(
                     "For mode 2, file must be a list of three strings")
 
             for i in range(3):
                 data = im[:, :, i].flatten()
-                wavfile.write(file[i], SAMPLERATE, data)
+                wavfile.write(file_name[i], SAMPLERATE, data)
         else:
             raise ValueError("Unrecongnized mode")
         return width, height
 
     def read_wav(self,
-                 file,
+                 file_name,
                  mode,
                  dimensions):
         """
@@ -236,9 +236,9 @@ class Glitcher:
         width, height = dimensions
 
         if mode == 0:
-            if type(file) != str:
+            if type(file_name) != str:
                 raise TypeError("Filename must be a string for mode 0")
-            data = wavfile.read(file)[1]
+            data = np.copy(wavfile.read(file_name)[1])
 
             if data.dtype == "int16":
                 data //= 256
@@ -249,9 +249,9 @@ class Glitcher:
                 .reshape((height, width, 3))
 
         elif mode == 1:
-            if type(file) != str:
+            if type(file_name) != str:
                 raise TypeError("Filename must be a string for mode 1")
-            data = wavfile.read(file)[1]
+            data = np.copy(wavfile.read(file_name)[1])
 
             if data.dtype == "int16":
                 data //= 256
@@ -261,14 +261,14 @@ class Glitcher:
             im = data.reshape((height, width, 3))
 
         elif mode == 2:
-            if type(file) != list or \
-                    len(file) != 3 or \
-                    not max([type(file[i]) is str for i in range(3)]):
+            if type(file_name) != list or \
+                    len(file_name) != 3 or \
+                    not max([type(file_name[i]) is str for i in range(3)]):
                 raise TypeError(
                     "For mode 2, file must be a list of three strings")
 
             data = np.concatenate(
-                [wavfile.read(f)[1][:width * height] for f in file]
+                [wavfile.read(f)[1][:width * height] for f in file_name]
             ).flatten()
             # [1] since wavfile.read() returns fs, data
 

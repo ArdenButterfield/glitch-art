@@ -4,7 +4,7 @@
 glitcher/*.wav
 images/raw/*
 images/glitched/*
-sources
+sources/*
 glitcher/venv
 **/.idea
 glitcher/*.png
