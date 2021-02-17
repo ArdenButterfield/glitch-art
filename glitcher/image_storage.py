@@ -79,7 +79,6 @@ class ImageStorage:
         return self.im_representation
 
     def as_pil_array(self):
-        print("converting to pil array", self.im_representation, self.im_type)
         if self.im_type == NP_ARRAY:
             arr = Image.fromarray(np.uint8(self.im_representation))
             self.im_representation = arr

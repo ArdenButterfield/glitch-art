@@ -305,7 +305,6 @@ class Glitcher:
         im = self.image.as_bmp()
 
         im_array = np.array(list(im.getvalue()))
-        print(im_array[:50])
         im_array[0x12] = width & 0xFF
         im_array[0x13] = (width & 0xFF00) >> 0x8
         im_array[0x14] = (width & 0xFF0000) >> 0x10
@@ -314,7 +313,6 @@ class Glitcher:
         im_array[0x17] = (height & 0xFF00) >> 0x8
         im_array[0x18] = (height & 0xFF0000) >> 0x10
         im_array[0x19] = (height & 0xFF000000) >> 0x18
-        print(im_array[:50])
         # self.image.im_representation.write(bytes(list(im_array)))
         self.image.im_representation.write(bytes(list(im_array)))
 
@@ -477,6 +475,19 @@ class Glitcher:
                     im[row][col] = cell_above
         self.image.im_representation = im
 
+
+    def srgb_to_rgb(self):
+        convert = lambda b: b / 12.92 if (b <= (255 * 0.04045)) else ((((b / 255) + 0.055) / 1.055) ** 2.4) * 255
+        vconvert = np.vectorize(convert)
+        im = self.image.as_numpy_array()
+        self.image.im_representation = vconvert(im)
+
+    def rgb_to_srgb(self):
+        convert = lambda b: 12.95 * b if (b <= (0.0031308 * 255)) else (1.055 * (b / 255)**(1/2.4) - 0.055) * 255
+        vconvert = np.vectorize(convert)
+        im = self.image.as_numpy_array()
+        self.image.im_representation = vconvert(im)
+
     def dither(self,n,initial=-1):
         """
         TODO: It works, but why are the colors so bleh?
@@ -485,7 +496,7 @@ class Glitcher:
             self.bayer = Bayer(initial=initial)
 
         bayer_matrix = self.bayer.get_scaled_matrix(n, 255)
-
+        print(bayer_matrix)
         im = self.image.as_numpy_array()
         h = len(im)
         w = len(im[0])

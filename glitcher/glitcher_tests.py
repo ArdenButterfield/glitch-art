@@ -210,5 +210,14 @@ def test_smear():
     a.smear(30)
     a.display()
 
+def test_rgb_srgb():
+    a = Glitcher()
+    a.load_image(branches)
+    a.srgb_to_rgb()
+    a.display()
+    a.rgb_to_srgb()
+    a.display()
+
+
 if __name__ == "__main__":
-    test_checkpoints()
+    test_rgb_srgb()
