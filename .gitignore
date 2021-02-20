@@ -14,4 +14,3 @@ glitcher/scratch.py
 images
 .ipynb_checkpoints
 !docs/img/*
-docs/Philosophy.ipynb
