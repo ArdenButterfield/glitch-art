@@ -319,10 +319,7 @@ class Glitcher:
     def jpeg_noise(self, quality):
         """
         Saves to a jpeg of quality 0 to 100.
-        TODO: Maybe also include subsampling? https://pillow.readthedocs.io/en/stable/handbook/image-file-formats.html#jpeg
         """
-        if logging:
-            self.log.append({'jpeg_noise':[quality]})
         self.image.as_jpeg(quality)
 
     def jpeg_bit_flip(self,
