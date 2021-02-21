@@ -10,6 +10,6 @@ What happens when things go wrong? What does the unexpected look like? I don't k
 
 ## [Chapter 3: Making Mistakes, Faking Mistakes](docs/chapter3.ipynb)
 
-## Chapter 4: A Gallery of Glitches
+## [Chapter 4: A Gallery of Glitches](docs/chapter4.ipynb)
 
 ## [Sources](docs/sources.ipynb)
