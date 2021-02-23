@@ -23,7 +23,6 @@ from _glitch_util import \
     _cellular_automata, \
     _pad_with_val,\
     _get_2d_automata_num
-import bug_eater
 from bayer import Bayer
 
 logging.basicConfig()
@@ -682,18 +681,6 @@ class Glitcher:
         im = im.filter(ImageFilter.Kernel(kernel_dims, kernel, 1, 0))
         im = im.convert("RGB")
         self.image.im_representation = im
-
-    def to_bug_eater(self, mode):
-        """
-        mode:
-        0: Bugs eat from black
-        1: Bugs eat from white
-
-        Create a board object of the image for the bug eater fun!
-        """
-        im = self.image.as_numpy_array()
-        board = bug_eater.Board(im, mode)
-        return board
 
     ############################################################################
     #
