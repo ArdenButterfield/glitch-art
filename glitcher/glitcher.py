@@ -460,16 +460,10 @@ class Glitcher:
         return
 
     def smear(self, distance):
-        d_sq = distance ** 2
-
         im = self.image.as_numpy_array()
         for row in range(1, len(im)):
-            print(row)
-            for col in range(len(im[0])):
-                cell_above = im[row - 1][col]
-                curr_cell = im[row][col]
-                if sum((cell_above - curr_cell) ** 2) < d_sq:
-                    im[row][col] = cell_above
+            mask = abs(im[row] - im[row - 1]) < distance
+            im[row][mask] = im[row - 1][mask]
         self.image.im_representation = im
 
 
@@ -486,14 +480,10 @@ class Glitcher:
         self.image.im_representation = vconvert(im)
 
     def dither(self,n,initial=-1):
-        """
-        TODO: It works, but why are the colors so bleh?
-        """
         if type(initial) is list and type(initial[0]) is list:
             self.bayer = Bayer(initial=initial)
 
         bayer_matrix = self.bayer.get_scaled_matrix(n, 255)
-        print(bayer_matrix)
         im = self.image.as_numpy_array()
         h = len(im)
         w = len(im[0])
@@ -731,7 +721,6 @@ class Glitcher:
         Invert the colors to their opposite.
         """
 
-        logging.info("Inverting colors")
         im = self.image.as_numpy_array()
         self.image.im_representation = 255 - im
 
@@ -740,7 +729,6 @@ class Glitcher:
         Rotate clockwise by the given number of turns.
         """
 
-        logging.info(f"Rotating {turns}")
         im = self.image.as_numpy_array()
         self.image.im_representation = np.rot90(im, turns, (1,0))
 
@@ -749,7 +737,6 @@ class Glitcher:
         Flip the image horizontally.
         """
 
-        logging.info(f"Flipping horizontally")
         im = self.image.as_numpy_array()
         self.image.im_representation = np.fliplr(im)
 
@@ -758,7 +745,6 @@ class Glitcher:
         Flip the image vertically.
         """
 
-        logging.info(f"Flipping vertically")
         im = self.image.as_numpy_array()
         self.image.im_representation = np.flipud(im)
 
