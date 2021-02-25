@@ -455,9 +455,6 @@ class Glitcher:
     #
     ############################################################################
 
-    def _dist(self, cell1, cell2):
-        return
-
     def smear(self, distance):
         im = self.image.as_numpy_array()
         for row in range(1, len(im)):
@@ -467,13 +464,17 @@ class Glitcher:
 
 
     def srgb_to_rgb(self):
-        convert = lambda b: b / 12.92 if (b <= (255 * 0.04045)) else ((((b / 255) + 0.055) / 1.055) ** 2.4) * 255
+        convert = lambda b: b / 12.92 if \
+            (b <= (255 * 0.04045)) else \
+            ((((b / 255) + 0.055) / 1.055) ** 2.4) * 255
         vconvert = np.vectorize(convert)
         im = self.image.as_numpy_array()
         self.image.im_representation = vconvert(im)
 
     def rgb_to_srgb(self):
-        convert = lambda b: 12.95 * b if (b <= (0.0031308 * 255)) else (1.055 * (b / 255)**(1/2.4) - 0.055) * 255
+        convert = lambda b: 12.95 * b if \
+            (b <= (0.0031308 * 255)) else \
+            (1.055 * (b / 255)**(1/2.4) - 0.055) * 255
         vconvert = np.vectorize(convert)
         im = self.image.as_numpy_array()
         self.image.im_representation = vconvert(im)
@@ -499,7 +500,7 @@ class Glitcher:
 
         self.image.im_representation = im
 
-    def elementary_automata(self, rule=154):
+    def elementary_automata(self, rule=154, cutoff=230):
         """
         Suggested rule: 154
         Does a cellular automata effect to the image. The rule should be an
@@ -508,7 +509,7 @@ class Glitcher:
         https://en.wikipedia.org/wiki/Elementary_cellular_automaton
         """
         infection_condition = lambda x: \
-            np.all(x > 230, axis=1).astype(np.int0)
+            np.all(x > cutoff, axis=1).astype(np.int0)
         symptom = lambda x: 255 - x
 
         im = self.image.as_numpy_array()
