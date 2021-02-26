@@ -1,8 +1,8 @@
 # Glitch Art project \[STILL A WORK IN PROGRESS\]
 
-![A true glitch](docs/img/trueglitch.png)
+![Image of branches with multicolored bands across it](img/branchjpeg2.png)
 
-What happens when things go wrong? What does the unexpected look like? I don't know exactly what got me started on glitch art, but here I am. Over the past couple months, I've created set of Python programs for the creation of glitch art. Here's a bit on where that led me, philosophically, tecnically, and artistically.
+## [Chapter 0: A True Glitch](docs/chapter0.ipynb)
 
 ## [Chapter 1: Glitch and Visual Ethics](docs/chapter1.ipynb)
 
