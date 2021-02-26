@@ -1,6 +1,6 @@
 # Glitch Art project \[STILL A WORK IN PROGRESS\]
 
-![Image of branches with multicolored bands across it](img/branchjpeg2.png)
+![Image of branches with multicolored bands across it](docs/img/branchjpeg2.png)
 
 ## [Chapter 0: A True Glitch](docs/chapter0.ipynb)
 
