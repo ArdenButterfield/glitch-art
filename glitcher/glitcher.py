@@ -30,16 +30,16 @@ logging.getLogger().setLevel(logging.INFO)
 
 SAMPLERATE = 44100 # For exporting audio
 
+
 class Glitcher:
     def __init__(self, max_checkpoints=-1):
 
-        self.image = ImageStorage()
-        self.max_checkpoints = max_checkpoints
-        self.checkpoints = []
-        self.num_checkpoints = 0
+        self._image = ImageStorage()
+        self._max_checkpoints = max_checkpoints
+        self._checkpoints = []
+        self._num_checkpoints = 0
 
-        self.bayer = Bayer()
-
+        self._bayer = Bayer()
 
     ############################################################################
     #
@@ -47,16 +47,18 @@ class Glitcher:
     #
     ############################################################################
 
-    def load_image(self, image_file:str):
-
-        self.image.load_file(image_file)
+    def load_image(self, image_file):
+        """
+        image_file: file name of image to load
+        """
+        self._image.load_file(image_file)
 
     def copy(self):
         """
         Create a copy of a Glitcher object.
         """
         copied = Glitcher()
-        copied.image = self.image.copy()
+        copied._image = self._image.copy()
         return copied
 
     def save_image(self, file_name, disp=True):
@@ -67,7 +69,7 @@ class Glitcher:
         Should we display the image when we save it?
         """
 
-        image = self.image.as_pil_array()
+        image = self._image.as_pil_array()
         image.save(file_name)
         if disp:
             image.show()
@@ -83,20 +85,20 @@ class Glitcher:
             else:
                 size = width * height * 3
             raw_data = file.read(size)
-        self.image.load_binary(raw_data, width, height, grayscale)
+        self._image.load_binary(raw_data, width, height, grayscale)
 
     def display(self):
         """
         Show the image in a window, using the PIL Image.show() method.
         """
-        image = self.image.as_pil_array()
+        image = self._image.as_pil_array()
         image.show()
 
     def display_inline(self):
         """
         Useful for Jupyter Notebooks.
         """
-        image = self.image.as_pil_array()
+        image = self._image.as_pil_array()
         IPython.display.display(image)
 
     ############################################################################
@@ -114,16 +116,18 @@ class Glitcher:
         checkpoint.
         """
 
-        if self.num_checkpoints == self.max_checkpoints:
-            self.checkpoints.pop(0)
-            self.num_checkpoints -= 1
+        if self._num_checkpoints == self._max_checkpoints:
+            self._checkpoints.pop(0)
+            self._num_checkpoints -= 1
 
-        self.checkpoints.append((self.copy(), name))
-        self.num_checkpoints += 1
+        self._checkpoints.append((self.copy(), name))
+        self._num_checkpoints += 1
+
     def undo(self):
         """
         Undo the glitcher object to the most recent checkpoint.
         """
+
         self.revert_to_checkpoint()
 
     def revert_to_checkpoint(self, name=""):
@@ -132,29 +136,29 @@ class Glitcher:
         or is an empty string, revert to the most recent checkpoint.
         """
 
-        if self.num_checkpoints == 0:
+        if self._num_checkpoints == 0:
             logging.warning("No checkpoints saved, unable to revert.")
             return
 
         if name:
             index = self._find_checkpoint_index(name)
-            self.checkpoints = self.checkpoints[:index + 1]
-            self.num_checkpoints = index + 1
+            self._checkpoints = self._checkpoints[:index + 1]
+            self._num_checkpoints = index + 1
 
-        last = self.checkpoints.pop()
+        last = self._checkpoints.pop()
         last_object = last[0]
-        self.image = last_object.image
+        self._image = last_object.image
 
-        self.num_checkpoints -= 1
-        return
+        self._num_checkpoints -= 1
 
     def _find_checkpoint_index(self, name):
         """
         name: checkpoint name to search for.
         returns the most recent index of that checkpoint name.
         """
-        for i in range(self.num_checkpoints - 1, -1, -1):
-            if self.checkpoints[i][1] == name:
+
+        for i in range(self._num_checkpoints - 1, -1, -1):
+            if self._checkpoints[i][1] == name:
                 return i
         return -1
 
@@ -181,7 +185,7 @@ class Glitcher:
         are needed for reading a wav file.
         """
 
-        im = self.image.as_numpy_array()
+        im = self._image.as_numpy_array()
         width = len(im[0])
         height = len(im)
 
@@ -229,7 +233,8 @@ class Glitcher:
         dimensions are the dimensions of the image, represented as a
         (width, height) tuple, which are returned by the save_wav method.
         """
-        self.image.as_numpy_array()
+
+        self._image.as_numpy_array()
         width, height = dimensions
 
         if mode == 0:
@@ -271,9 +276,11 @@ class Glitcher:
 
             im = np.swapaxes(data.reshape((3, -1)), 0, 1)\
                 .reshape((height, width, 3))
+
         else:
             raise ValueError("Invalid mode.")
-        self.image.im_representation = im
+
+        self._image.im_representation = im
 
     ############################################################################
     #
@@ -282,7 +289,12 @@ class Glitcher:
     ############################################################################
 
     def get_bmp_dims(self):
-        im = self.image.as_bmp()
+        """
+        Returns the dimensions dictated by the header of the image's BMP
+        representation, as a (width, height) tuple.
+        """
+
+        im = self._image.as_bmp()
         im_array = np.array(list(im.getvalue()))
 
         width = im_array[0x12] + \
@@ -312,34 +324,40 @@ class Glitcher:
         This is useful, since if you continue working with the image, PIL might
         complain that the image is not formatted correctly.
         """
+
         width, height = newdims
+
         if width < 0 or height < 0:
             w, h = self.get_bmp_dims()
             width += w
             height += h
-        im = self.image.as_bmp()
+
+        im = self._image.as_bmp()
 
         im_array = np.array(list(im.getvalue()))
+
         im_array[0x12] = width & 0xFF
         im_array[0x13] = (width & 0xFF00) >> 0x8
         im_array[0x14] = (width & 0xFF0000) >> 0x10
         im_array[0x15] = (width & 0xFF000000) >> 0x18
+
         im_array[0x16] = height & 0xFF
         im_array[0x17] = (height & 0xFF00) >> 0x8
         im_array[0x18] = (height & 0xFF0000) >> 0x10
         im_array[0x19] = (height & 0xFF000000) >> 0x18
-        # self.image.im_representation.write(bytes(list(im_array)))
+
         if filename:
             with open(filename, 'wb') as f:
                 f.write(bytes(list(im_array)))
         else:
-            self.image.im_representation.write(bytes(list(im_array)))
+            self._image.im_representation.write(bytes(list(im_array)))
 
     def jpeg_noise(self, quality):
         """
         Saves to a jpeg of quality 0 to 100.
         """
-        self.image.as_jpeg(quality)
+
+        self._image.as_jpeg(quality)
 
     def jpeg_bit_flip(self,
                       num_bits,
@@ -361,11 +379,13 @@ class Glitcher:
         This is useful, since if you continue working with the image, PIL might
         complain that the image is not formatted correctly.
         """
-        im = self.image.as_jpeg()
+
+        im = self._image.as_jpeg()
         im_array = list(im.getvalue())
         im_size = len(im_array)
         start, end = _find_start_and_end(im_array, im_size)
         bytes_to_flip = np.random.randint(start, end, num_bits)
+
         for i in bytes_to_flip:
             if change_bytes:
                 im_array[i] = np.random.randint(0, 254)
@@ -376,7 +396,7 @@ class Glitcher:
             with open(filename, 'wb') as f:
                 f.write(bytes(list(im_array)))
         else:
-            self.image.im_representation.write(bytes(list(im_array)))
+            self._image.im_representation.write(bytes(list(im_array)))
 
     def shuffle(self,
                 format=0,
@@ -417,8 +437,9 @@ class Glitcher:
         This is useful, since if you continue working with the image, PIL might
         complain that the image is not formatted correctly.
         """
+
         if format == 0: # NUMPY
-            im = self.image.as_numpy_array()
+            im = self._image.as_numpy_array()
             height = len(im)
             width = len(im[0])
             channels = len(im[0][0])
@@ -426,9 +447,9 @@ class Glitcher:
             im_array = np.reshape(im, (im_size, channels))
             start_of_image = 0
             end_of_image = im_size
+
         elif format == 1: # BMP
-            # TODO: Why isn't this doing anything???
-            im = self.image.as_bmp()
+            im = self._image.as_bmp()
             im_array = np.array(list(im.getvalue()))
 
             # Offset to the start of pixel data is stored little endian
@@ -439,13 +460,10 @@ class Glitcher:
                              im_array[13] * 0x1000000
 
             # if I understand correctly, there is no end of image code.
-            """end_of_image = im_array[2] + \
-                             im_array[3] * 0x10 + \
-                             im_array[4] * 0x100 + \
-                             im_array[5] * 0x1000"""
             end_of_image = len(im_array) - 1
+
         elif format == 2: # JPEG
-            im = self.image.as_jpeg()
+            im = self._image.as_jpeg()
             im_array = np.array(list(im.getvalue()))
             im_size = len(im_array)
 
@@ -483,7 +501,7 @@ class Glitcher:
 
         if format == 0:
             im = np.reshape(im_array, (height, width, channels))
-            self.image.im_representation = im
+            self._image.im_representation = im
             self.save_image(filename)
 
         elif format in [1, 2]: # BMP or JPEG
@@ -491,7 +509,7 @@ class Glitcher:
                 with open(filename, 'wb') as f:
                     f.write(bytes(list(im_array)))
             else:
-                self.image.im_representation.write(bytes(list(im_array)))
+                self._image.im_representation.write(bytes(list(im_array)))
 
     ############################################################################
     #
@@ -500,35 +518,64 @@ class Glitcher:
     ############################################################################
 
     def smear(self, distance):
-        im = self.image.as_numpy_array()
+        """
+        Moving from the top of the image downwards, if the channel value at a
+        particular pixel is less than [distance] away from the channel value at
+        the pixel immediately above it, we replace it with the value of the
+        channel in the pixel above it.
+        """
+
+        im = self._image.as_numpy_array()
+
         for row in range(1, len(im)):
             mask = abs(im[row] - im[row - 1]) < distance
             im[row][mask] = im[row - 1][mask]
-        self.image.im_representation = im
 
+        self._image.im_representation = im
 
     def srgb_to_rgb(self):
+        """
+        Using the algorithm in https://surma.dev/things/ditherpunk/, convert
+        an srgb image to rgb.
+        """
+
         convert = lambda b: b / 12.92 if \
             (b <= (255 * 0.04045)) else \
             ((((b / 255) + 0.055) / 1.055) ** 2.4) * 255
+
         vconvert = np.vectorize(convert)
-        im = self.image.as_numpy_array()
-        self.image.im_representation = vconvert(im)
+        im = self._image.as_numpy_array()
+
+        self._image.im_representation = vconvert(im)
 
     def rgb_to_srgb(self):
+        """
+        Using the algorithm in https://surma.dev/things/ditherpunk/, convert
+        an srgb image to rgb.
+        """
+
         convert = lambda b: 12.95 * b if \
             (b <= (0.0031308 * 255)) else \
             (1.055 * (b / 255)**(1/2.4) - 0.055) * 255
+
         vconvert = np.vectorize(convert)
-        im = self.image.as_numpy_array()
-        self.image.im_representation = vconvert(im)
+        im = self._image.as_numpy_array()
+
+        self._image.im_representation = vconvert(im)
 
     def dither(self,n,initial=-1):
-        if type(initial) is list and type(initial[0]) is list:
-            self.bayer = Bayer(initial=initial)
+        """
+        Using a Bayer algorithm, dither an image.
+        n: The number of times we apply the recursive matrix generator rule to
+        the initial matrix
+        initial: The initial matrix. Defaults to [[0,2],[3,1]]
+        """
 
-        bayer_matrix = self.bayer.get_scaled_matrix(n, 255)
-        im = self.image.as_numpy_array()
+        if type(initial) is list and type(initial[0]) is list:
+            self._bayer = Bayer(initial=initial)
+
+        bayer_matrix = self._bayer.get_scaled_matrix(n, 255)
+        im = self._image.as_numpy_array()
         h = len(im)
         w = len(im[0])
 
@@ -542,7 +589,7 @@ class Glitcher:
         im[im >= bayer_matrix] = 255
         im[im < bayer_matrix] = 0
 
-        self.image.im_representation = im
+        self._image.im_representation = im
 
     def elementary_automata(self, rule=154, cutoff=230):
         """
@@ -552,11 +599,12 @@ class Glitcher:
         See here for more info:
         https://en.wikipedia.org/wiki/Elementary_cellular_automaton
         """
+
         infection_condition = lambda x: \
             np.all(x > cutoff, axis=1).astype(np.int0)
         symptom = lambda x: 255 - x
 
-        im = self.image.as_numpy_array()
+        im = self._image.as_numpy_array()
         row_len = len(im[0])
         row_array = np.zeros(row_len, dtype=np.int0)
 
@@ -567,7 +615,7 @@ class Glitcher:
             im[row][mask] = symptom(im[row][mask])
 
             row_array = _cellular_automata(row_array, row_len, rule)
-        self.image.im_representation = im
+        self._image.im_representation = im
 
     def cellular_2d_automata(self,
                              rule,
@@ -582,13 +630,14 @@ class Glitcher:
         patterns that should map to 0. Later strings in the list override
         earlier ones.
         """
+
         if type(rule) is list:
             rule = _get_2d_automata_num(rule)
         if type(rule) is not int or rule < 0:
             raise ValueError("Automata rule is incorrectly formatted.")
         infection_condition = lambda x: (x > high_cutoff).astype(int)
 
-        im = self.image.as_numpy_array()
+        im = self._image.as_numpy_array()
 
         cols = len(im[0])
 
@@ -609,7 +658,7 @@ class Glitcher:
         input = (up << 4) + (left << 3) + (center << 2) + (right << 1) + down
         mask = 1 << input
 
-        self.image.im_representation = ((rule & mask) >> input) * 255
+        self._image.im_representation = ((rule & mask) >> input) * 255
 
     def flatten_reshape(self,
                         newdims,
@@ -623,7 +672,7 @@ class Glitcher:
         2 - the image repeated again.
         """
         width, height = newdims
-        im = self.image.as_numpy_array()
+        im = self._image.as_numpy_array()
         im = im.flatten()
 
         new_len = width * height * 3
@@ -634,7 +683,7 @@ class Glitcher:
         elif fillwith == 2:
             im = _pad_with_val(im, new_len, -1)
 
-        self.image.im_representation = im.reshape((width, height, 3))
+        self._image.im_representation = im.reshape((width, height, 3))
 
     def fly_eye(self,
                 box_dims,
@@ -645,16 +694,26 @@ class Glitcher:
         """
         A grid, a bit like a fly's eye, or some sort of funky lens.
 
-        box_dims: A width, height tuple
-        scale: How much area should be inside the box. I.e. scale=2 means that
+        box_dims:
+        The size of each grid box, as a (width, height) tuple
+
+        scale:
+        How much area should be inside the box. I.e. scale=2 means that
         an image twice the size of the box is shrunken down to fit in the box.
-        x_backwards: loop backwards horizontally.
-        y_backwards: loop backwards vertically.
-        in_place: Modifies the image in place, instead of working with a copy.
+
+        x_backwards:
+        loop backwards horizontally.
+
+        y_backwards:
+        loop backwards vertically.
+
+        in_place:
+        Modifies the image in place, instead of working with a copy.
         Note that if in_place=False, x_backwards and y_backwards will have no
         effect.
         """
-        im = self.image.as_numpy_array()
+
+        im = self._image.as_numpy_array()
         if in_place:
             src = im
             dst = im
@@ -696,21 +755,22 @@ class Glitcher:
                 x_ind = min(int(x_t + scale * (x - x_t)),x_max - 1)
                 dst[y][x] = src[y_ind][x_ind]
 
-        self.image.im_representation = dst
+        self._image.im_representation = dst
 
-    def pixel_extreme(self, cutoff):
+    def pixel_extreme(self, cutoff=-1):
         """
         Send all pixel channels below the cutoff to 0 and all pixel channels
-        above the cutoff to 255. If cutoff is negative, use an auto cutoff.
-        (median)
+        above the cutoff to 255. If cutoff is negative, or not provided, use the
+        mean pixel value as the cutoff.
         """
-        im = self.image.as_numpy_array()
+
+        im = self._image.as_numpy_array()
         if cutoff < 0:
             cutoff = np.mean(im)
         im[im >= cutoff] = 255
         im[im < cutoff] = 0
         # I love numpy
-        self.image.im_representation = im
+        self._image.im_representation = im
 
     def edge_detect(self,
                     kernel_dims=(3, 3),
@@ -721,11 +781,12 @@ class Glitcher:
         source:
         https://www.geeksforgeeks.org/python-edge-detection-using-pillow/
         """
-        im = self.image.as_pil_array()
+
+        im = self._image.as_pil_array()
         im = im.convert("L")
         im = im.filter(ImageFilter.Kernel(kernel_dims, kernel, 1, 0))
         im = im.convert("RGB")
-        self.image.im_representation = im
+        self._image.im_representation = im
 
     ############################################################################
     #
@@ -737,48 +798,50 @@ class Glitcher:
         """
         Returns width, height
         """
-        im = self.image.as_numpy_array()
+
+        im = self._image.as_numpy_array()
         return len(im[0]),len(im)
 
     def make_grayscale(self):
         """
         Convert the image to grayscale.
         """
-        im = self.image.as_pil_array()
+
+        im = self._image.as_pil_array()
         im = im.convert('LA').convert('RGB')
-        self.image.im_representation = im
+        self._image.im_representation = im
 
     def invert_colors(self):
         """
         Invert the colors to their opposite.
         """
 
-        im = self.image.as_numpy_array()
-        self.image.im_representation = 255 - im
+        im = self._image.as_numpy_array()
+        self._image.im_representation = 255 - im
 
     def rotate(self, turns):
         """
         Rotate clockwise by the given number of turns.
         """
 
-        im = self.image.as_numpy_array()
-        self.image.im_representation = np.rot90(im, turns, (1,0))
+        im = self._image.as_numpy_array()
+        self._image.im_representation = np.rot90(im, turns, (1,0))
 
     def horizontal_flip(self):
         """
         Flip the image horizontally.
         """
 
-        im = self.image.as_numpy_array()
-        self.image.im_representation = np.fliplr(im)
+        im = self._image.as_numpy_array()
+        self._image.im_representation = np.fliplr(im)
 
     def vertical_flip(self):
         """
         Flip the image vertically.
         """
 
-        im = self.image.as_numpy_array()
-        self.image.im_representation = np.flipud(im)
+        im = self._image.as_numpy_array()
+        self._image.im_representation = np.flipud(im)
 
     def contrast(self, value):
         self.enhance("contrast", value)
@@ -797,7 +860,8 @@ class Glitcher:
         Some basic image enhancing, using our trusty friend PIL. Options for
         style are: color, contrast, brightness, and sharpness.
         """
-        im = self.image.as_pil_array()
+        
+        im = self._image.as_pil_array()
         if style == "color":
             enhancer = ImageEnhance.Color(im)
         elif style == "contrast":
@@ -809,4 +873,4 @@ class Glitcher:
         else:
             raise ValueError("Unrecognized style value in enhance method.")
 
-        self.image.im_representation = enhancer.enhance(value)
+        self._image.im_representation = enhancer.enhance(value)
