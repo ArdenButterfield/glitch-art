@@ -191,8 +191,13 @@ def test_bmp_rescale():
     a = Glitcher()
     a.load_image(branches)
     w, h = a.get_bmp_dims()
-    a.rescale_bmp_dims((w+1,h-1))
-    a.save_image('testout.bmp')
+    a.rescale_bmp_dims((w+1,h-1),filename=dir+"bmp_rescale.bmp")
+
+def test_bmp_rescale2():
+    a = Glitcher()
+    a.load_image(branches)
+    w, h = a.get_bmp_dims()
+    a.rescale_bmp_dims((1, -1), filename=dir + "bmp_rescale.bmp")
 
 def test_enhance():
     # ENHANCE!!
@@ -220,4 +225,4 @@ def test_rgb_srgb():
 
 
 if __name__ == "__main__":
-    test_rgb_srgb()
+    test_bmp_rescale2()

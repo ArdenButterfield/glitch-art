@@ -30,7 +30,6 @@ logging.getLogger().setLevel(logging.INFO)
 
 SAMPLERATE = 44100 # For exporting audio
 
-# TODO: test on more diverse images! specifically the pride flags lol.
 class Glitcher:
     def __init__(self, max_checkpoints=-1):
 
@@ -55,22 +54,23 @@ class Glitcher:
     def copy(self):
         """
         Create a copy of a Glitcher object.
-        Note that we do not log these copies. TODO: should we?
         """
         copied = Glitcher()
         copied.image = self.image.copy()
         return copied
 
-    def save_image(self, file_name:str,disp=True):
+    def save_image(self, file_name, disp=True):
         """
-        Save the image to [file_name], and saves the log to [file_name].txt
+        Save the image to [file_name]
+
+        disp:
+        Should we display the image when we save it?
         """
 
         image = self.image.as_pil_array()
+        image.save(file_name)
         if disp:
             image.show()
-        logging.info("Saving image")
-        image.save(file_name)
 
     def load_binary(self,
                     filename,
@@ -177,10 +177,9 @@ class Glitcher:
         If mode=2, file should be a list of three filename strings, otherwise it
         should be a single string.
 
-        returns the dimensions of the image, which are needed for reading a wav
-        file.
+        returns the dimensions of the image as a (width, height) tuple, which
+        are needed for reading a wav file.
         """
-        logging.info("Saving to wav file")
 
         im = self.image.as_numpy_array()
         width = len(im[0])
@@ -227,10 +226,9 @@ class Glitcher:
         If mode=2, file should be a list of three filename strings, otherwise it
         should be a single string.
 
-        dimensions are the dimensions of the image, which are returned by
-        the save_wav method.
+        dimensions are the dimensions of the image, represented as a
+        (width, height) tuple, which are returned by the save_wav method.
         """
-        logging.info("Reading wav file")
         self.image.as_numpy_array()
         width, height = dimensions
 
@@ -298,9 +296,27 @@ class Glitcher:
 
         return width, height
 
-    def rescale_bmp_dims(self, newdims):
-        width, height = newdims
+    def rescale_bmp_dims(self,
+                         newdims,
+                         filename=""):
+        """
+        Rescale a bmp image by changing the width and height values in the
+        header.
 
+        newdims:
+        either the new dimensions that the image should be OR, if the
+        either of them are less than zero, the change to the dimensions.
+
+        filename:
+        If this is provided, it will write directly to that file name.
+        This is useful, since if you continue working with the image, PIL might
+        complain that the image is not formatted correctly.
+        """
+        width, height = newdims
+        if width < 0 or height < 0:
+            w, h = self.get_bmp_dims()
+            width += w
+            height += h
         im = self.image.as_bmp()
 
         im_array = np.array(list(im.getvalue()))
@@ -313,7 +329,11 @@ class Glitcher:
         im_array[0x18] = (height & 0xFF0000) >> 0x10
         im_array[0x19] = (height & 0xFF000000) >> 0x18
         # self.image.im_representation.write(bytes(list(im_array)))
-        self.image.im_representation.write(bytes(list(im_array)))
+        if filename:
+            with open(filename, 'wb') as f:
+                f.write(bytes(list(im_array)))
+        else:
+            self.image.im_representation.write(bytes(list(im_array)))
 
     def jpeg_noise(self, quality):
         """
@@ -323,14 +343,23 @@ class Glitcher:
 
     def jpeg_bit_flip(self,
                       num_bits,
-                      change_bytes=False):
+                      change_bytes=False,
+                      filename=""):
         """
         Let's flip some bits in our pretty little jpeg!
-        num_bits: number of bits we will flip.
-        change_bytes: if True, we select a byte, rather than a bit,
+
+        num_bits:
+        number of bits we will flip.
+
+        change_bytes:
+        if True, we select a byte, rather than a bit,
         and randomize its values. From a visual standpoint, changing this
         doesn't really do much.
 
+        filename:
+        If this is provided, it will write directly to that file name.
+        This is useful, since if you continue working with the image, PIL might
+        complain that the image is not formatted correctly.
         """
         im = self.image.as_jpeg()
         im_array = list(im.getvalue())
@@ -343,14 +372,19 @@ class Glitcher:
             else:
                 im_array[i] = _flip_bit_of_byte(im_array[i],
                                                      np.random.randint(0,8))
-        self.image.im_representation.write(bytes(list(im_array)))
+        if filename:
+            with open(filename, 'wb') as f:
+                f.write(bytes(list(im_array)))
+        else:
+            self.image.im_representation.write(bytes(list(im_array)))
 
     def shuffle(self,
                 format=0,
                 random_order=True,
                 even_slices=False,
                 chunks=2,
-                entire_image=True):
+                entire_image=True,
+                filename=""):
         """
         Cuts the bytes like a deck of cards... well sort of.
         Take a section from somewhere in the middle of the array and put it
@@ -376,7 +410,12 @@ class Glitcher:
         entire_image:
         If true, the entire image will be shuffled. Otherwise, just a randomly
         chosen segment from the middle of the image will be.
-        Recommended: use entire_image=False for jpeg images. TODO: why?
+        Recommended: use entire_image=False for jpeg images.
+
+        filename:
+        If this is provided, it will write directly to that file name.
+        This is useful, since if you continue working with the image, PIL might
+        complain that the image is not formatted correctly.
         """
         if format == 0: # NUMPY
             im = self.image.as_numpy_array()
@@ -445,9 +484,14 @@ class Glitcher:
         if format == 0:
             im = np.reshape(im_array, (height, width, channels))
             self.image.im_representation = im
+            self.save_image(filename)
 
         elif format in [1, 2]: # BMP or JPEG
-            self.image.im_representation.write(bytes(list(im_array)))
+            if filename:
+                with open(filename, 'wb') as f:
+                    f.write(bytes(list(im_array)))
+            else:
+                self.image.im_representation.write(bytes(list(im_array)))
 
     ############################################################################
     #

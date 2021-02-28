@@ -24,9 +24,13 @@ def _cellular_automata(row, row_len, rule):
 
 def _find_start_and_end(jpeg_image, im_size):
     """
-    jpeg image is a list or numpy array of the bytes of the jpeg image.
+    jpeg image:
+    is a list or numpy array of the bytes of the jpeg image.
     We use FFDA as the start code and FFD9 as the end code, and we return
     the first byte after FFDA, and the first byte of FFD9
+
+    im_size:
+    The length of the array
     """
     found = False
     for i in range(im_size - 1):
@@ -48,9 +52,14 @@ def _find_start_and_end(jpeg_image, im_size):
 
 def _pad_with_val(arr, size, val):
     """
-    arr: one dimensional array to be padded
-    size: new length of the array
-    val: what number the array should be padded with. negative means: pad with
+    arr:
+    one dimensional array to be padded
+
+    size:
+    new length of the array
+
+    val:
+    what number the array should be padded with. negative means: pad with
     the image repeated over and over again.
     """
     l = len(arr)
@@ -89,8 +98,8 @@ def _get_2d_automata_num(rulebook):
     Later strings in the list override earlier ones. Returns -1 if rule is not
     formatted correctly.
 
-    This is an unbelievably bad algorithm, but it's all I have the energy for
-    right now.
+    This is an unbelievably bad algorithm, and if I knew regex, it would be a
+    lot better. It's all I have the energy for right now.
     """
     if not _valid_automata_(rulebook):
         return -1
