@@ -554,7 +554,7 @@ class Glitcher:
     def rgb_to_srgb(self):
         """
         Using the algorithm in https://surma.dev/things/ditherpunk/, convert
-        an srgb image to rgb.
+        an rgb image to srgb.
         """
 
         convert = lambda b: 12.95 * b if \

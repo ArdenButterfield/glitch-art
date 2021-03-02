@@ -144,7 +144,7 @@ Using the algorithm in https://surma.dev/things/ditherpunk/, convert an srgb ima
 
 ### Glitcher.rgb_to_srgb()
 
-Using the algorithm in https://surma.dev/things/ditherpunk/, convert an srgb image to rgb.
+Using the algorithm in https://surma.dev/things/ditherpunk/, convert an rgb image to srgb.
 
 ### Glitcher.dither(n, initial=-1)
 
