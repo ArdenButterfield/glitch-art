@@ -17,3 +17,5 @@ Glitch art examines the aesthetics of corrupting, distorting, and mangling image
 ## [Chapter 4: A Gallery of Glitches](docs/chapter4.ipynb)
 
 ## [Sources](docs/sources.ipynb)
+
+## [Appendix: Glitcher Documentation](glitcher/README.md)

@@ -47,11 +47,11 @@ class Glitcher:
     #
     ############################################################################
 
-    def load_image(self, image_file):
+    def load_image(self, filename):
         """
-        image_file: file name of image to load
+        filename: file name of image to load
         """
-        self._image.load_file(image_file)
+        self._image.load_file(filename)
 
     def copy(self):
         """
@@ -61,16 +61,16 @@ class Glitcher:
         copied._image = self._image.copy()
         return copied
 
-    def save_image(self, file_name, disp=True):
+    def save_image(self, filename, disp=True):
         """
-        Save the image to [file_name]
+        Save the image to [filename]
 
         disp:
         Should we display the image when we save it?
         """
 
         image = self._image.as_pil_array()
-        image.save(file_name)
+        image.save(filename)
         if disp:
             image.show()
 
@@ -169,7 +169,7 @@ class Glitcher:
     ############################################################################
 
     def save_wav(self,
-                 file_name,
+                 filename,
                  mode):
         """
         Save the image to a wav file, or list of wav files. There are three
@@ -190,34 +190,34 @@ class Glitcher:
         height = len(im)
 
         if mode == 0:
-            if type(file_name) != str:
+            if type(filename) != str:
                 raise TypeError("Filename must be a string for mode 0")
             channels = np.concatenate([im[:, :, channel].flatten()
                                        for channel in range(3)])
-            wavfile.write(file_name, SAMPLERATE, channels)
+            wavfile.write(filename, SAMPLERATE, channels)
 
         elif mode == 1:
-            if type(file_name) != str:
+            if type(filename) != str:
                 raise TypeError("Filename must be a string for mode 1")
             channels = im.flatten()
-            wavfile.write(file_name,SAMPLERATE, channels)
+            wavfile.write(filename,SAMPLERATE, channels)
 
         elif mode == 2:
-            if type(file_name) != list or \
-                    len(file_name) != 3 or \
-                    not max([type(file_name[i]) is str for i in range(3)]):
+            if type(filename) != list or \
+                    len(filename) != 3 or \
+                    not max([type(filename[i]) is str for i in range(3)]):
                 raise TypeError(
                     "For mode 2, file must be a list of three strings")
 
             for i in range(3):
                 data = im[:, :, i].flatten()
-                wavfile.write(file_name[i], SAMPLERATE, data)
+                wavfile.write(filename[i], SAMPLERATE, data)
         else:
             raise ValueError("Unrecongnized mode")
         return width, height
 
-    def read_wav(self,
-                 file_name,
+    def load_wav(self,
+                 filename,
                  mode,
                  dimensions):
         """
@@ -238,9 +238,9 @@ class Glitcher:
         width, height = dimensions
 
         if mode == 0:
-            if type(file_name) != str:
+            if type(filename) != str:
                 raise TypeError("Filename must be a string for mode 0")
-            data = np.copy(wavfile.read(file_name)[1])
+            data = np.copy(wavfile.read(filename)[1])
 
             if data.dtype == "int16":
                 data //= 256
@@ -251,9 +251,9 @@ class Glitcher:
                 .reshape((height, width, 3))
 
         elif mode == 1:
-            if type(file_name) != str:
+            if type(filename) != str:
                 raise TypeError("Filename must be a string for mode 1")
-            data = np.copy(wavfile.read(file_name)[1])
+            data = np.copy(wavfile.read(filename)[1])
 
             if data.dtype == "int16":
                 data //= 256
@@ -263,14 +263,14 @@ class Glitcher:
             im = data.reshape((height, width, 3))
 
         elif mode == 2:
-            if type(file_name) != list or \
-                    len(file_name) != 3 or \
-                    not max([type(file_name[i]) is str for i in range(3)]):
+            if type(filename) != list or \
+                    len(filename) != 3 or \
+                    not max([type(filename[i]) is str for i in range(3)]):
                 raise TypeError(
                     "For mode 2, file must be a list of three strings")
 
             data = np.concatenate(
-                [wavfile.read(f)[1][:width * height] for f in file_name]
+                [wavfile.read(f)[1][:width * height] for f in filename]
             ).flatten()
             # [1] since wavfile.read() returns fs, data
 
@@ -320,9 +320,10 @@ class Glitcher:
         either of them are less than zero, the change to the dimensions.
 
         filename:
-        If this is provided, it will write directly to that file name.
-        This is useful, since if you continue working with the image, PIL might
-        complain that the image is not formatted correctly.
+        If this is provided, it will write directly to that file name, and the
+        rescaling will not effect the internal image represerntation. This is
+        useful, since if you continue working with the image, PIL might complain
+        that the image is not formatted correctly.
         """
 
         width, height = newdims
@@ -375,9 +376,10 @@ class Glitcher:
         doesn't really do much.
 
         filename:
-        If this is provided, it will write directly to that file name.
-        This is useful, since if you continue working with the image, PIL might
-        complain that the image is not formatted correctly.
+        If this is provided, it will write directly to that file name, and the
+        rescaling will not effect the internal image represerntation. This is
+        useful, since if you continue working with the image, PIL might complain
+        that the image is not formatted correctly.
         """
 
         im = self._image.as_jpeg()
@@ -433,9 +435,10 @@ class Glitcher:
         Recommended: use entire_image=False for jpeg images.
 
         filename:
-        If this is provided, it will write directly to that file name.
-        This is useful, since if you continue working with the image, PIL might
-        complain that the image is not formatted correctly.
+        If this is provided, it will write directly to that file name, and the
+        rescaling will not effect the internal image represerntation. This is
+        useful, since if you continue working with the image, PIL might complain
+        that the image is not formatted correctly.
         """
 
         if format == 0: # NUMPY
@@ -563,7 +566,9 @@ class Glitcher:
 
         self._image.im_representation = vconvert(im)
 
-    def dither(self,n,initial=-1):
+    def dither(self,
+               n,
+               initial=-1):
         """
         Using a Bayer algorithm, dither an image.
         n: The number of times we apply the recursive matrix generator rule to
@@ -591,13 +596,19 @@ class Glitcher:
 
         self._image.im_representation = im
 
-    def elementary_automata(self, rule=154, cutoff=230):
+    def elementary_automata(self,
+                            rule=154,
+                            cutoff=230):
         """
         Suggested rule: 154
         Does a cellular automata effect to the image. The rule should be an
         integer between 0 and 255.
         See here for more info:
         https://en.wikipedia.org/wiki/Elementary_cellular_automaton
+
+        cutoff:
+        Any pixels brighter than this value will trigger that cell into an on
+        state.
         """
 
         infection_condition = lambda x: \
@@ -629,6 +640,10 @@ class Glitcher:
         should map to 1, with * as a wildcard. Strings with a minus are the
         patterns that should map to 0. Later strings in the list override
         earlier ones.
+
+        high_cutoff:
+        Before starting the automata algorithm, values above the high cutoff are
+        sent to 255, values below it to 0.
         """
 
         if type(rule) is list:
@@ -860,7 +875,7 @@ class Glitcher:
         Some basic image enhancing, using our trusty friend PIL. Options for
         style are: color, contrast, brightness, and sharpness.
         """
-        
+
         im = self._image.as_pil_array()
         if style == "color":
             enhancer = ImageEnhance.Color(im)
