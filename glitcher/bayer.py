@@ -1,4 +1,9 @@
+"""
+Create matrices for Bayer dithering.
+"""
+
 import numpy as np
+
 class Bayer:
     def __init__(self,initial=-1):
         self.matrices = []
