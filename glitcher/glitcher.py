@@ -147,7 +147,7 @@ class Glitcher:
 
         last = self._checkpoints.pop()
         last_object = last[0]
-        self._image = last_object.image
+        self._image = last_object._image
 
         self._num_checkpoints -= 1
 
