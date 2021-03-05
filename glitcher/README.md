@@ -2,7 +2,7 @@
 
 ### Glitcher(max_checkpoints=-1)
 
-Initialization of Glitcher object. If max_checkpoints is a positive integer, then that is the maximum number of checkpoints that will be stored. Otherwise, there is no limit to the number of checkpoints.
+Initialization of a Glitcher object. If max_checkpoints is a positive integer, then that is the maximum number of checkpoints that will be stored. Otherwise, there is no limit to the number of checkpoints.
 
 ## Import/Export Methods
 
@@ -87,9 +87,9 @@ If mode=2, file should be a list of three filename strings, otherwise it should 
 Rescale a bmp image by changing the width and height values in the
 header.
 
-**newdims**: Either the new dimensions that the image should be OR, if the either of them are less than zero, the change to the dimensions.
+**newdims**: Either the new dimensions that the image should be OR, if either of them are less than zero, change the current dimensions by that amount.
 
-**filename**: If this is provided, it will write directly to that file name, and the rescaling will not effect the internal image represerntation. This is useful, since if you continue working with the image, PIL might complain that the image is not formatted correctly.
+**filename**: If this is provided, it will write directly to that file name, and the rescaling will not affect the internal image representation. This is useful, since if you continue working with the image, PIL might complain that the image is not formatted correctly.
 
 
 ### Glitcher.jpeg_noise(quality)
@@ -105,7 +105,7 @@ Let's flip some bits in our pretty little jpeg!
 
 **change_bytes**: if True, we select a byte, rather than a bit, and randomize its values. From a visual standpoint, changing this doesn't really do much.
 
-**filename**: If this is provided, it will write directly to that file name, and the rescaling will not effect the internal image represerntation. This is useful, since if you continue working with the image, PIL might complain that the image is not formatted correctly.
+**filename**: If this is provided, it will write directly to that file name, and the rescaling will not affect the internal image representation. This is useful, since if you continue working with the image, PIL might complain that the image is not formatted correctly.
 
 
 ### Glitcher.shuffle(format=0, random_order=True, even_slices=False, chunks=2, entire_image=True, filename="")
@@ -130,7 +130,7 @@ somewhere else.
 
 **entire_image**: If true, the entire image will be shuffled. Otherwise, just a randomly chosen segment from the middle of the image will be. Recommended: use entire_image=False for jpeg images.
 
-**filename**: If this is provided, it will write directly to that file name, and the rescaling will not effect the internal image represerntation. This is useful, since if you continue working with the image, PIL might complain that the image is not formatted correctly.
+**filename**: If this is provided, it will write directly to that file name, and the rescaling will not affect the internal image representation. This is useful, since if you continue working with the image, PIL might complain that the image is not formatted correctly.
 
 ## Miscellaneous Glitch Methods
 
