@@ -1,4 +1,4 @@
-# Glitch Art project \[STILL A WORK IN PROGRESS\]
+# The Mystified Image: An Exploration of Glitch Art
 
 ## Arden Butterfield
 
