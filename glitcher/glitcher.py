@@ -505,7 +505,8 @@ class Glitcher:
         if format == 0:
             im = np.reshape(im_array, (height, width, channels))
             self._image.im_representation = im
-            self.save_image(filename)
+            if filename:
+                self.save_image(filename)
 
         elif format in [1, 2]: # BMP or JPEG
             if filename:
