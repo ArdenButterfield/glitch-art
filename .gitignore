@@ -2,6 +2,7 @@
 **.pyc
 **.pdf
 glitcher/*.wav
+glitcher/*.wav.asd
 images/raw/*
 images/glitched/*
 sources/*
