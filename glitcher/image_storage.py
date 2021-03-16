@@ -109,6 +109,7 @@ class ImageStorage:
                                         format='JPEG',
                                         quality=int(min(quality , 100)))
             self.im_representation = byte_array
+
         self.im_type = JPEG
         return self.im_representation
 
@@ -119,7 +120,7 @@ class ImageStorage:
         elif self.im_type == PIL_ARRAY:
             self.im_representation = self._as_bytes(PNG)
 
-        self.im_type = JPEG
+        self.im_type = PNG
         return self.im_representation
 
     def as_bmp(self):
